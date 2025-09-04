@@ -1,0 +1,249 @@
+# Rosetta Docs V2
+
+# **A block‑level yield router**
+
+---
+
+## 1) Overview
+
+Rosetta reads Hyperliquid markets and vaults **every block**, distilling complex on-chain data into a clean, actionable user interface: **live APY, deposits, utilization, liquidity, LLTV,** and **latest block** — giving you the complete picture at a glance.
+
+Most dashboards only refresh when transactions occur; Rosetta updates **every block** — giving you the true current state, not just stale snapshots from the last trade.
+
+**Use Rosetta to:**
+
+- See which vault or market is best to lend and borrow right-now.
+- Avoid entering on fading spikes.
+- Allocate with confidence. You’re acting on the *truest* live data.
+
+---
+
+## 2) Why Rosetta
+
+**The problem**: Event-only dashboards freeze between transactions. APY can fluctuate for seconds/minutes without being visible.
+
+**Rosetta’s answer:** We recompute **APY every block** and stamp each view with **Latest Block** so you know what’s current and what’s not. 
+
+|  | Event-only dashboards | **Rosetta** |
+| --- | --- | --- |
+| **APY freshness** | Updates on transactions only | **Updates every block** (even in quiet periods) |
+| **Quiet periods** | Flat line, then sudden jump | **Smooth glide** that reflects implied rate drift |
+| **Trust signal** | No explicit timebase | **Latest Block** visible on every tile/detail |
+| **Comparability** | Screens can be out of sync | **Single clock** across vaults/markets |
+| **Actionability** | You react after the snap | You act on **what’s true now** |
+
+**Quick example:**
+
+- `13:02:00 — Event‑based UI shows **12.8%**.`
+- `13:02:15 — Utilization softens (no tx); model implies **11.9%**.`
+- `13:02:20 — **Rosetta already shows 11.9%**.`
+- `13:02:40 — First tx lands; event‑based UI finally updates to **11.9%**.`
+
+**Result**: 20–40s of better information—often enough to avoid a bad entry.
+
+![image.png](Rosetta%20Docs%20V2%20263f8d84f17c807e8ea8e5b137457cce/image.png)
+
+---
+
+## 3) Who it’s for
+
+**A) Self‑directed users**
+
+- **Need:** Fast, clean reads to place/adjust positions without guesswork.
+- **How they use it:** Open **Markets/Vaults**, check **leader**, glance **utilization/liquidity**, execute.
+- **Outcome:** Confident entries/exits on the **currently highest APY**, sized to depth and risk.
+
+**B) Trading Desks / Curators / Props / Small funds**
+
+- **Need:** Reliable truth layer in the workflow.
+- **How they use it:** Pin **Markets** as the yield clock. Watch rotations on block‑level curves. Time reallocations.
+- **Outcome:** Single source of truth; cleaner coordination and entry timing.
+
+> **Coming Soon:** Automated, non‑custodial smart reallocation that follows Rosetta’s live signals to keep capital in the best options, maximize the returns.
+> 
+
+---
+
+## 4) Block-by-block accrual (how “live APY” is produced)
+
+**What we store per market**
+
+- `totalSupplyAssets`, `totalSupplyShares`
+- `totalBorrowAssets`, `totalBorrowShares`
+- `lastUpdate` (block timestamp of last accrual)
+- `fee` (protocol reserve/fee factor)
+
+**Accrual on every block (even with no tx)**
+
+```python
+# Calculate time elapsed since last update
+elapsed = blockTimestamp - lastUpdate
+
+# Skip if no time has passed or no borrows exist
+if elapsed == 0 or totalBorrowAssets == 0:pass  # no-op
+
+else:
+    # Compound borrow interest over elapsed time
+    interest = compound(totalBorrowAssets, borrowRate, elapsed)
+    
+    # Mirror the interest on both sides
+    totalBorrowAssets += interest
+    totalSupplyAssets += interest
+    lastUpdate = blockTimestamp
+```
+
+**Key derived reads per market**
+
+```python
+# Calculate utilization ratio
+utilization = totalBorrowAssets / totalSupplyAssets  # U = B / S
+
+# Get borrow APR from utilization curve
+const borrowApy = wTaylorCompounded(borrowRate, SECONDS_PER_YEAR);
+
+# Calculate supply APR (adjusted for fees)
+const supplyApy = wMulDown(wMulDown(borrowApy, utilization), 10n ** 18n - fee;
+```
+
+*We rely on Morpho's off-chain APY calculations. For more details:* https://docs.morpho.org/build/earn/tutorials/get-data#apy-native--rewards
+
+**Why this matters**
+
+- We **recompute on each block** using `lastUpdate → current block`, so APY **moves in quiet periods**, not only on transactions.
+- `U = B/S` updates immediately after accrual, which flows into the **supply APR** calculation and into the chart.
+- If a reorg touches recent blocks, we **replay accrual** over that window and re-stamp the **Latest Block**.
+
+> Plain English: each block we “age” the market from lastUpdate to now, add the earned interest to both sides, refresh U, read a fresh borrow APR, derive supply APR, and roll that into the APY line. That’s why Rosetta’s APY glides block-by-block instead of stepping only on events.
+> 
+
+---
+
+## 5) Surfaces
+
+### 5.1 Vaults
+
+Purpose: Choose where to **supply** right now.
+
+**Fields**
+
+| Field | What it means |
+| --- | --- |
+| **Vault** | Strategy anchor; verify you’re on the right object |
+| **Supply APY** | Display APY computed per block |
+| **Total Deposits** | Depth of the vault |
+| **Latest Block** | Freshness stamp |
+1. Confirm **Latest Block** is current →
+2. Scan **APY (live)** line for **hold vs. spike** →
+3. Check **Total Deposits** matches sizing →
+4. Skim **Signals** for fresh constraints →
+5. **Supply**
+
+---
+
+### 5.2 Markets
+
+Purpose: Decide **what to borrow** and on **which collateral**.
+
+**Fields**
+
+| Field | What it means |
+| --- | --- |
+| **Collateral assets** | Eligible collateral and **LLTV** |
+| **Loans** | Borrowable asset(s) |
+| **Borrow APY (live)** | Borrow rate per block |
+| **Liquidity** | Borrowable capacity |
+| **Utilization** | % of capacity in use |
+| **LLTV** | Max borrow against collateral |
+| **Latest Block** | Freshness stamp |
+1. Read **Borrow APY (live)** line — look for **hold vs. spike** →
+2. Check **Liquidity** ≥ your intended size (watch caps/queues) →
+3. Check **Utilization** band — avoid extremes if sizing; note sensitivity →
+4. Validate **LLTV** headroom on your collateral (leave a buffer) →
+5. If pairing with a supply leg, confirm **net spread after fees/impact** ≥ 0 →
+6. **Borrow**
+
+---
+
+### 5.3 APY & freshness (block‑by‑block)
+
+- **APY (live)** reads from the **latest processed block**; no manual refresh.
+- **Latest Block** displays the block height/time used.
+- Charts glide during quiet periods and step on parameter/tx changes.
+- When the chain briefly reorders blocks, we recalculate those blocks and refresh the reads.
+
+---
+
+### 5.4 Charts
+
+- Every point is computed at **block cadence.**
+- Charts are fully **live and can be utilized to follow up-to-date market changes**.
+
+---
+
+### 5.5 Asset APY comparison (coming soon)
+
+Pick an asset (e.g., `USDT₀`) and view eligible vaults **side‑by‑side** on a block‑level APY chart. 
+
+---
+
+## 6) Atomic Yield (coming soon)
+
+Rosetta’s smart allocation engine keeps capital in the strongest **risk‑adjusted** APYs.
+
+**What it reads;**
+
+- Live APY per block, short‑horizon persistence/volatility
+- Total Deposits/flows (depth, crowding)
+- Market liquidity, utilization, borrow cost, caps/limits/LLTV
+- Programmatic events (parameter flips, composition updates)
+- All‑in costs: gas, routing, swap, funding, incentives, slippage
+
+**Behaviors**
+
+- Decides when to **stay**, **rotate**, or **enhance** (e.g., loops, basis/enhanced basis) with guardrails for depth and sensitivity.
+- Size adaptively so projected edge survives **after fees and impact**.
+
+![image.png](Rosetta%20Docs%20V2%20263f8d84f17c807e8ea8e5b137457cce/image%201.png)
+
+**Transparency**
+
+> Vetted markets only. User-authorized, non-custodial transactions. Sizing adapts to depth; decisions account for fees and price impact.
+> 
+
+> You’ll see where capital sits now, timestamped moves, and the path taken.
+> 
+
+---
+
+## 7) Glossary
+
+| Term | Definition |
+| --- | --- |
+| APY (live) | Annualized yield computed from the latest processed block. |
+| Utilization | Share of available liquidity currently in use. |
+| Liquidity | Practical capacity available to borrow/supply without moving the rate. |
+| LLTV | Liquidation Loan‑to‑Value; max borrow allowance vs. collateral. |
+| LTV | Loan-to-Value |
+| Reserve factor | Share of interest kept by the protocol; reduces supply APR. |
+| Supply APR | Borrow APR × Utilization × (1 − reserve factor). |
+| Borrow APR | Current cost to borrow, from the utilization curve and params. |
+| Spread (net) | Supply APR − Borrow APR − fees/price impact (for paired legs). |
+| Liquidity | Practical capacity available to borrow/supply without moving the rate. |
+| Borrows | Outstanding borrowed assets. |
+| Reserves | Assets held by the protocol; not available as cash. |
+| Cap / Limit | Protocol-set ceiling on deposits or borrows. |
+| Depth | Size the venue can absorb before a large rate move. |
+| Market | Borrow/supply venue for a specific asset pair on chain. |
+| Vault | Strategy wrapper allocating deposits across one or more markets. |
+| Total Deposits (TVL) | Assets currently deposited into a vault. |
+| Liquidation threshold | Level at which positions can be liquidated (often ≥ LLTV). |
+| Collateral value | Marked value of pledged asset(s). |
+| Parameter change | Updates to caps, reserve factor, kink, LLTV, incentives, etc. |
+| Gas / Routing cost | Transaction and routing fees incurred when moving funds. |
+| Swap fee | Percentage charged by a DEX for exchanging assets. |
+| Price impact | Slippage from trade size vs. available liquidity. |
+| Non-custodial | Actions are signed from your wallet; funds aren’t held by Rosetta. |
+| Rotate / Rebalance | Move funds between venues to improve net yield. |
+| Allocate | Place deposits/borrows according to a decision or policy. |
+| Latest Block | Block height/time used for the read (tiles and charts). |
+| Looping | Supply asset → borrow same asset → resupply (leveraged lend). |
