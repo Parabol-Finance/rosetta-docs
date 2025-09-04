@@ -1,0 +1,58 @@
+---
+title: Block-by-block accrual (how “live APY” is produced)
+description: Block-by-block accrual (how “live APY” is produced)
+---
+
+# Block-by-block accrual (how “live APY” is produced)
+
+**What we store per market**
+
+- `totalSupplyAssets`, `totalSupplyShares`
+- `totalBorrowAssets`, `totalBorrowShares`
+- `lastUpdate` (block timestamp of last accrual)
+- `fee` (protocol reserve/fee factor)
+
+**Accrual on every block (even with no tx)**
+
+```python
+# Calculate time elapsed since last update
+elapsed = blockTimestamp - lastUpdate
+
+# Skip if no time has passed or no borrows exist
+if elapsed == 0 or totalBorrowAssets == 0:pass  # no-op
+
+else:
+    # Compound borrow interest over elapsed time
+    interest = compound(totalBorrowAssets, borrowRate, elapsed)
+    
+    # Mirror the interest on both sides
+    totalBorrowAssets += interest
+    totalSupplyAssets += interest
+    lastUpdate = blockTimestamp
+```
+
+**Key derived reads per market**
+
+```python
+# Calculate utilization ratio
+utilization = totalBorrowAssets / totalSupplyAssets  # U = B / S
+
+# Get borrow APR from utilization curve
+const borrowApy = wTaylorCompounded(borrowRate, SECONDS_PER_YEAR);
+
+# Calculate supply APR (adjusted for fees)
+const supplyApy = wMulDown(wMulDown(borrowApy, utilization), 10n ** 18n - fee;
+```
+
+*We rely on Morpho's off-chain APY calculations. For more details:* https://docs.morpho.org/build/earn/tutorials/get-data#apy-native--rewards
+
+**Why this matters**
+
+- We **recompute on each block** using `lastUpdate → current block`, so APY **moves in quiet periods**, not only on transactions.
+- `U = B/S` updates immediately after accrual, which flows into the **supply APR** calculation and into the chart.
+- If a reorg touches recent blocks, we **replay accrual** over that window and re-stamp the **Latest Block**.
+
+> Plain English: each block we “age” the market from lastUpdate to now, add the earned interest to both sides, refresh U, read a fresh borrow APR, derive supply APR, and roll that into the APY line. That’s why Rosetta’s APY glides block-by-block instead of stepping only on events.
+> 
+
+---

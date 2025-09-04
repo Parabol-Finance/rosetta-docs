@@ -1,0 +1,37 @@
+---
+title: Glossary
+description: Glossary
+---
+
+# Glossary
+
+| Term | Definition |
+| --- | --- |
+| APY (live) | Annualized yield computed from the latest processed block. |
+| Utilization | Share of available liquidity currently in use. |
+| Liquidity | Practical capacity available to borrow/supply without moving the rate. |
+| LLTV | Liquidation Loan‑to‑Value; max borrow allowance vs. collateral. |
+| LTV | Loan-to-Value |
+| Reserve factor | Share of interest kept by the protocol; reduces supply APR. |
+| Supply APR | Borrow APR × Utilization × (1 − reserve factor). |
+| Borrow APR | Current cost to borrow, from the utilization curve and params. |
+| Spread (net) | Supply APR − Borrow APR − fees/price impact (for paired legs). |
+| Liquidity | Practical capacity available to borrow/supply without moving the rate. |
+| Borrows | Outstanding borrowed assets. |
+| Reserves | Assets held by the protocol; not available as cash. |
+| Cap / Limit | Protocol-set ceiling on deposits or borrows. |
+| Depth | Size the venue can absorb before a large rate move. |
+| Market | Borrow/supply venue for a specific asset pair on chain. |
+| Vault | Strategy wrapper allocating deposits across one or more markets. |
+| Total Deposits (TVL) | Assets currently deposited into a vault. |
+| Liquidation threshold | Level at which positions can be liquidated (often ≥ LLTV). |
+| Collateral value | Marked value of pledged asset(s). |
+| Parameter change | Updates to caps, reserve factor, kink, LLTV, incentives, etc. |
+| Gas / Routing cost | Transaction and routing fees incurred when moving funds. |
+| Swap fee | Percentage charged by a DEX for exchanging assets. |
+| Price impact | Slippage from trade size vs. available liquidity. |
+| Non-custodial | Actions are signed from your wallet; funds aren’t held by Rosetta. |
+| Rotate / Rebalance | Move funds between venues to improve net yield. |
+| Allocate | Place deposits/borrows according to a decision or policy. |
+| Latest Block | Block height/time used for the read (tiles and charts). |
+| Looping | Supply asset → borrow same asset → resupply (leveraged lend). |
