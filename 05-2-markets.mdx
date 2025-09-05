@@ -1,28 +1,31 @@
 ---
-title: 2 Markets
-description: 2 Markets
+title: Rosetta
+description: Surfaces
 ---
 
-# 2 Markets
+# Markets
 
-Purpose: Decide **what to borrow** and on **which collateral**.
+<Note>
+**Purpose:** Decide **what to borrow** and on **which collateral**.
+</Note>
 
-**Fields**
+## Fields
 
 | Field | What it means |
 | --- | --- |
-| **Collateral assets** | Eligible collateral and **LLTV** |
+| **Collateral assets** | Eligible collateral and **LLTV** |
 | **Loans** | Borrowable asset(s) |
 | **Borrow APY (live)** | Borrow rate per block |
 | **Liquidity** | Borrowable capacity |
 | **Utilization** | % of capacity in use |
 | **LLTV** | Max borrow against collateral |
 | **Latest Block** | Freshness stamp |
+
+## Workflow
+
 1. Read **Borrow APY (live)** line — look for **hold vs. spike** →
 2. Check **Liquidity** ≥ your intended size (watch caps/queues) →
 3. Check **Utilization** band — avoid extremes if sizing; note sensitivity →
 4. Validate **LLTV** headroom on your collateral (leave a buffer) →
 5. If pairing with a supply leg, confirm **net spread after fees/impact** ≥ 0 →
 6. **Borrow**
-
----
