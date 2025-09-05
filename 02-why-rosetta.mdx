@@ -1,23 +1,27 @@
 ---
-title: Why Rosetta
-description: Why Rosetta
+title: "Rosetta"
+description: "The source of truth"
 ---
 
-# Why Rosetta
+## Why Rosetta
 
-**The problem**: Event-only dashboards freeze between transactions. APY can fluctuate for seconds/minutes without being visible.
+<Warning>
+  **The problem**: Event-only dashboards freeze between transactions. APY can fluctuate for seconds/minutes without being visible.
+</Warning>
 
-**Rosetta’s answer:** We recompute **APY every block** and stamp each view with **Latest Block** so you know what’s current and what’s not. 
+<Check>
+  **Rosetta’s answer:** We recompute **APY every block** and stamp each view with **Latest Block** so you know what’s current and what’s not.
+</Check>
 
-|  | Event-only dashboards | **Rosetta** |
-| --- | --- | --- |
-| **APY freshness** | Updates on transactions only | **Updates every block** (even in quiet periods) |
-| **Quiet periods** | Flat line, then sudden jump | **Smooth glide** that reflects implied rate drift |
-| **Trust signal** | No explicit timebase | **Latest Block** visible on every tile/detail |
-| **Comparability** | Screens can be out of sync | **Single clock** across vaults/markets |
-| **Actionability** | You react after the snap | You act on **what’s true now** |
+|               | Event-only dashboards        | **Rosetta**                                       |
+| ------------- | ---------------------------- | ------------------------------------------------- |
+| APY freshness | Updates on transactions only | **Updates every block** (even in quiet periods)   |
+| Quiet periods | Flat line, then sudden jump  | **Smooth glide** that reflects implied rate drift |
+| Trust signal  | No explicit timebase         | **Latest Block** visible on every tile/detail     |
+| Comparability | Screens can be out of sync   | **Single clock** across vaults/markets            |
+| Actionability | You react after the snap     | You act on **what’s true now**                    |
 
-**Quick example:**
+**Quick example: /**
 
 - `13:02:00 — Event‑based UI shows **12.8%**.`
 - `13:02:15 — Utilization softens (no tx); model implies **11.9%**.`
@@ -26,6 +30,6 @@ description: Why Rosetta
 
 **Result**: 20–40s of better information—often enough to avoid a bad entry.
 
-![image.png](Rosetta%20Docs%20V2%20263f8d84f17c807e8ea8e5b137457cce/image.png)
+![Image Pn](/images/image.png)
 
 ---
