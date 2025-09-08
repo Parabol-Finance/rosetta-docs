@@ -15,13 +15,7 @@
         "groups": [
           {
             "group": "Core",
-            "pages": [
-              "index",
-              "introduction",
-              "01-overview",
-              "02-why-rosetta",
-              "03-who-its-for"
-            ]
+            "pages": ["01-overview"]
           },
           {
             "group": "Mechanics",
@@ -38,27 +32,11 @@
           },
           {
             "group": "Reference",
-            "pages": [
-              "07-glossary"
-            ]
+            "pages": ["07-glossary"]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Community",
-          "href": "https://x.com/rosetta_hl",
-          "icon": "slack"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://parabol.fi/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
@@ -78,16 +56,7 @@
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
+    "options": ["copy", "view"]
   },
   "footer": {
     "socials": {
