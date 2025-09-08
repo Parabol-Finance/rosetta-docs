@@ -1,5 +1,6 @@
 {
   "name": "Rosetta Docs",
+  "theme": "mint",
   "navigation": {
     "pages": [
       "index",
