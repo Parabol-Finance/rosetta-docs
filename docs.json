@@ -1,22 +1,99 @@
 {
-  "name": "Rosetta Docs",
+  "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
+  "name": "Rosetta Docs",
+  "colors": {
+    "primary": "#16A34A",
+    "light": "#07C983",
+    "dark": "#15803D"
+  },
+  "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
-      "index",
-      "introduction",
-      "01-overview",
-      "02-why-rosetta",
-      "03-who-its-for",
-      "04-block-by-block-accrual-how-live-apy-is-produced",
-      "05-surfaces",
-      "05-1-vaults",
-      "05-2-markets",
-      "05-3-apy-freshness-blockbyblock",
-      "05-4-charts",
-      "05-5-asset-apy-comparison-coming-soon",
-      "06-atomic-yield-coming-soon",
-      "07-glossary"
+    "tabs": [
+      {
+        "tab": "Docs",
+        "groups": [
+          {
+            "group": "Core",
+            "pages": [
+              "index",
+              "introduction",
+              "01-overview",
+              "02-why-rosetta",
+              "03-who-its-for"
+            ]
+          },
+          {
+            "group": "Mechanics",
+            "pages": [
+              "04-block-by-block-accrual-how-live-apy-is-produced",
+              "05-surfaces",
+              "05-1-vaults",
+              "05-2-markets",
+              "05-3-apy-freshness-blockbyblock",
+              "05-4-charts",
+              "05-5-asset-apy-comparison-coming-soon",
+              "06-atomic-yield-coming-soon"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "07-glossary"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Community",
+          "href": "https://x.com/rosetta_hl",
+          "icon": "slack"
+        },
+        {
+          "anchor": "Blog",
+          "href": "https://parabol.fi/blog",
+          "icon": "newspaper"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:hello@parabol.fi"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "App",
+      "href": "https://rosetta.sh"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
     ]
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/parabol_fi",
+      "github": "https://github.com/parabol-fi",
+      "linkedin": "https://linkedin.com/company/parabol-fi"
+    }
   }
 }
