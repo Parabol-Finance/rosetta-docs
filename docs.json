@@ -26,7 +26,7 @@
           },
           {
             "group": "Allocator",
-            "pages": ["06-atomic-yield-coming-soon","07-risk-controls"]
+            "pages": ["07-risk-controls","06-atomic-yield-coming-soon"]
           },
           {
             "group": "Reference",
