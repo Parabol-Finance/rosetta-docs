@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "Rosetta Docs",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#000000",
+    "light": "#bfbfbf",
+    "dark": "#404040"
   },
   "favicon": "/favicon.svg",
   "navigation": {
