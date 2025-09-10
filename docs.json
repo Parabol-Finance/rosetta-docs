@@ -14,26 +14,25 @@
         "tab": "Docs",
         "groups": [
           {
-            "group": "Core",
+            "group": "Rosetta",
             "pages": ["01-overview"]
           },
           {
-            "group": "Mechanics",
+            "group": "Indexer",
             "pages": [
               "04-block-by-block-accrual-how-live-apy-is-produced",
-              "05-surfaces",
-              "05-1-vaults",
-              "05-2-markets",
-              "05-3-apy-freshness-blockbyblock",
-              "05-4-charts",
-              "05-5-asset-apy-comparison-coming-soon",
-              "06-atomic-yield-coming-soon"
+              "05-1-vaults", "05-2-markets","05-3-apy-freshness-blockbyblock"
             ]
+          },
+          {
+            "group": "Allocator",
+            "pages": ["06-atomic-yield-coming-soon","07-risk-controls"]
           },
           {
             "group": "Reference",
             "pages": ["07-glossary"]
           }
+          
         ]
       }
     ]

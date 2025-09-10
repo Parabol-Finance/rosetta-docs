@@ -1,74 +1,62 @@
 ---
-title: "Rosetta"
+title: "Block-by-block accrual"
 ---
 
-## Block-by-block accrual
+| Section | Summary |
+| --- | --- |
+| Supply | `totalSupplyAssets`,`totalSupplyShares`|
+| Borrow | `totalBorrowAssets`,`totalBorrowShares`|
+|Timing: | `lastUpdate` |
+|Protocol: | `fee` |
+|Accrual on every block (even with no tx)| Compound borrow interest over elapsed time; mirror to supply; update `lastUpdate`. |
+|Key derived reads per market | Utilization `U = B / S`; Borrow APY from curve; Supply APY adjusts for fees. |
 
-<Steps>
-  <Step title="What we store per market" icon="database">
-    <CardGroup cols={2}>
-      <Card title="Supply Metrics" icon="arrow-up">
-        - `totalSupplyAssets`
-        - `totalSupplyShares`
-      </Card>
-      <Card title="Borrow Metrics" icon="arrow-down">
-        - `totalBorrowAssets`
-        - `totalBorrowShares`
-      </Card>
-      <Card title="Timing" icon="clock">
-        - `lastUpdate` (block timestamp of last accrual)
-      </Card>
-      <Card title="Protocol" icon="gear">
-        - `fee` (protocol reserve/fee factor)
-      </Card>
-    </CardGroup>
-  </Step>
-  <Step title="Accrual on every block (even with no tx)" icon="refresh">
-    <CodeGroup>
+## Accrual on every block (even with no tx)
 
-    ```
-    # Calculate time elapsed since last update
-    elapsed = blockTimestamp - lastUpdate
+<CodeGroup>
+
+```python
+# Calculate time elapsed since last update
+elapsed = blockTimestamp - lastUpdate
+
+# Skip if no time has passed or no borrows exist
+if elapsed == 0 or totalBorrowAssets == 0:
+    pass  # no-op
+
+else:
+    # Compound borrow interest over elapsed time
+    interest = compound(totalBorrowAssets, borrowRate, elapsed)
     
-    # Skip if no time has passed or no borrows exist
-    if elapsed == 0 or totalBorrowAssets == 0:
-        pass  # no-op
-    
-    else:
-        # Compound borrow interest over elapsed time
-        interest = compound(totalBorrowAssets, borrowRate, elapsed)
-        
-        # Mirror the interest on both sides
-        totalBorrowAssets += interest
-        totalSupplyAssets += interest
-        lastUpdate = blockTimestamp
-    ```
+    # Mirror the interest on both sides
+    totalBorrowAssets += interest
+    totalSupplyAssets += interest
+    lastUpdate = blockTimestamp
+```
 
-    </CodeGroup>
-  </Step>
-  <Step title="Key derived reads per market" icon="calculator">
-    <Tabs>
-      <Tab title="Utilization Calculation">
-        ```python
-        # Calculate utilization ratio
-        utilization = totalBorrowAssets / totalSupplyAssets  # U = B / S
-        ```
-      </Tab>
-      <Tab title="APY Calculations">
-        ```python
-        # Get borrow APR from utilization curve
-        const borrowApy = wTaylorCompounded(borrowRate, SECONDS_PER_YEAR);
-        
-        # Calculate supply APR (adjusted for fees)
-        const supplyApy = wMulDown(wMulDown(borrowApy, utilization), 10n ** 18n - fee);
-        ```
-      </Tab>
-    </Tabs>
-    <Note>
-      _We rely on Morpho's off-chain APY calculations. For more details:_ https://docs.morpho.org/build/earn/tutorials/get-data#apy-native--rewards
-    </Note>
-  </Step>
-</Steps>
+</CodeGroup>
+
+## Key derived reads per market
+
+<Tabs>
+  <Tab title="Utilization Calculation">
+    ```python
+    # Calculate utilization ratio
+    utilization = totalBorrowAssets / totalSupplyAssets  # U = B / S
+    ```
+  </Tab>
+  <Tab title="APY Calculations">
+    ```python
+    # Get borrow APR from utilization curve
+    borrowApy = wTaylorCompounded(borrowRate, SECONDS_PER_YEAR)
+    
+    # Calculate supply APR (adjusted for fees)
+    supplyApy = wMulDown(wMulDown(borrowApy, utilization), 10 ** 18 - fee)
+    ```
+  </Tab>
+</Tabs>
+<Note>
+  _We rely on Morpho's off-chain APY calculations. For more details:_ https://docs.morpho.org/build/earn/tutorials/get-data#apy-native--rewards
+</Note>
 
 <info>
   **Why this matters**
@@ -78,11 +66,3 @@ title: "Rosetta"
   * If a reorg touches recent blocks, we **replay accrual** over that window and re-stamp the **Latest Block**.
 </info>
 
-<Frame>
-  <div style={{ padding:"1.5rem",backgroundColor:"#f8fafc",borderRadius:"8px",borderLeft:"4px solid #3b82f6" }}>
-  Plain English:
-
-  each block we "age" the market from lastUpdate to now, add the earned interest to both sides, refresh U, read a fresh borrow APR, derive supply APR, and roll that into the APY line. That's why Rosetta's APY glides block-by-block instead of stepping only on events.
-
-  </div>
-</Frame>
