@@ -1,0 +1,44 @@
+---
+title: "Architecture"
+description: ""
+sidebarTitle: ""
+---
+
+Rosetta doesn't hold user assets. The router doesn’t operate as a smart contract vault but as an **autonomous policy engine** orchestrating interactions across vaults.
+
+All assets remain inside underlying vaults. The sub-accounts created under each user are fully self-custodial, managed and accessible solely by the primary wallet. All earned assets, rewards, and points belong to the user.
+
+<div style={{ transform: "scale(1)", transformOrigin: "center", height: "100%" }}>
+```mermaid
+flowchart TD
+    A["User connects wallet"] --> B["Rosetta auto-creates sub-account (linked wallet)"]
+    B --> C["User deposits vault-native asset (USDT0, USDe, HYPE)"]
+    C --> D["Yield Router triggers Allocation Engine"]
+    
+    D --> E["Rosetta considers:<br/>- Vault APY<br/>- Liquidity & utilization<br/>- Gas & volatility<br/>- Deposit caps<br/>- Margin impact<br/>- Reliability score"]
+    
+    E --> F["Rank vaults & compute optimal allocation vector"]
+    F --> G{"Deposit too large for top vault?"}
+    G -->|Yes| H["Split allocation across multiple vaults"]
+    G -->|No| I["Allocate fully to top vault"]
+    
+    H --> J["Execute deposits via sub-account"]
+    I --> J["Execute deposits via sub-account"]
+    J --> K["Funds now reside directly inside vaults"]
+
+    K --> L["Continuous monitoring loop (block-by-block)"]
+    L --> M["Read PPS changes → compute yield & performance deltas"]
+    M --> N{"Performance gap > Δthreshold?"}
+    N -->|Yes| O["Rebalance:<br/>Withdraw from underperforming vaults<br/>Redeploy to outperforming vaults"]
+    N -->|No| P["Maintain current allocation"]
+
+    O --> Q["New equilibrium state established"]
+    P --> Q["New equilibrium state established"]
+
+    Q --> R{"User requests withdrawal?"}
+    R -->|No| L
+    R -->|Yes| S["Identify vaults holding user funds"]
+    S --> T["Withdraw directly back to user main wallet"]
+   ```
+   </div>
+   

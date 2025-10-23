@@ -1,0 +1,19 @@
+---
+title: "Overview"
+description: ""
+sidebarTitle: ""
+---
+
+
+Rosetta’s Smart Yield Router is a fully non-custodial orchestration layer that routes user capital to the highest-performing vaults across HyperEVM. It continuously monitors vault performance on a block-by-block basis and reallocates dynamically to maintain optimal yield efficiency while preserving capital integrity.
+
+Unlike traditional optimizers, Rosetta does not tokenize deposits or custody assets. The router operates entirely through on-chain policies, orchestrating user-owned wallets and vaults without ever touching deposited funds.
+
+## Onboarding
+
+Users onboard by connecting their primary wallet (Metamask, Rabby, etc.). Upon connection, Rosetta automatically generates a **sub-account** (an on-chain wallet) linked to the user’s main address.
+
+This sub-account acts as the operational layer for all vault interactions — deposits, withdrawals, and reallocations — but remains fully controlled by the user’s primary wallet. The assets residing in the sub-account can only be withdrawn to the users primary wallet, protected by the policies, ensuring funds security.
+
+![Subaccount](/images/rosetta_sub_account_creation.png)
+

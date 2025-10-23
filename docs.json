@@ -18,6 +18,10 @@
             "pages": ["01-overview"]
           },
           {
+            "group": "Yield Router",
+            "pages": ["02-yield-router", "03-yield-router-architecture", "04-smart-allocation-logic","05-deposits-withdrawals","06-risks"]
+          },
+          {
             "group": "Indexer",
             "pages": [
               "04-block-by-block-accrual-how-live-apy-is-produced",
