@@ -71,7 +71,7 @@
   "integrations": {
       "posthog": {
           "apiKey": "phc_B1nVkU59MZWKKRrj6ywZyfaPJwhpGqn0XzeceWRAlEn",
-          "apiHost": ""
+          "apiHost": "https://eu.posthog.com"
       }
     }
 }
