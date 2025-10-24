@@ -67,11 +67,11 @@
       "github": "https://github.com/Parabol-Finance",
       "linkedin": "https://linkedin.com/company/parabol-fi"
     }
-  }
-},
-"integrations": {
-    "posthog": {
-        "apiKey": "phc_B1nVkU59MZWKKRrj6ywZyfaPJwhpGqn0XzeceWRAlEn",
-        "apiHost": ""
+  },
+  "integrations": {
+      "posthog": {
+          "apiKey": "phc_B1nVkU59MZWKKRrj6ywZyfaPJwhpGqn0XzeceWRAlEn",
+          "apiHost": ""
+      }
     }
 }
