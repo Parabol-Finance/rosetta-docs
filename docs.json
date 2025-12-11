@@ -19,7 +19,7 @@
           },
           {
             "group": "Yield Router",
-            "pages": ["02-yield-router", "03-yield-router-architecture", "04-smart-allocation-logic","05-deposits-withdrawals","06-risks"]
+            "pages": ["02-yield-router", "03-yield-router-architecture", "04-smart-allocation-logic","05-deposits-withdrawals","06-risks","smart-contracts-and-security"]
           },
           {
             "group": "Indexer",
