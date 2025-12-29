@@ -3,35 +3,41 @@ title: Glossary
 description: Glossary
 ---
 
-# Glossary
-
 | Term | Definition |
 | --- | --- |
-| APY (live) | Annualized yield computed from the latest processed block. |
-| Utilization | Share of available liquidity currently in use. |
-| Liquidity | Practical capacity available to borrow/supply without moving the rate. |
-| LLTV | Liquidation Loan‑to‑Value; max borrow allowance vs. collateral. |
-| LTV | Loan-to-Value |
-| Reserve factor | Share of interest kept by the protocol; reduces supply APR. |
-| Supply APR | Borrow APR × Utilization × (1 − reserve factor). |
-| Borrow APR | Current cost to borrow, from the utilization curve and params. |
-| Spread (net) | Supply APR − Borrow APR − fees/price impact (for paired legs). |
-| Liquidity | Practical capacity available to borrow/supply without moving the rate. |
-| Borrows | Outstanding borrowed assets. |
-| Reserves | Assets held by the protocol; not available as cash. |
-| Cap / Limit | Protocol-set ceiling on deposits or borrows. |
-| Depth | Size the venue can absorb before a large rate move. |
-| Market | Borrow/supply venue for a specific asset pair on chain. |
-| Vault | Strategy wrapper allocating deposits across one or more markets. |
-| Total Deposits (TVL) | Assets currently deposited into a vault. |
-| Liquidation threshold | Level at which positions can be liquidated (often ≥ LLTV). |
-| Collateral value | Marked value of pledged asset(s). |
-| Parameter change | Updates to caps, reserve factor, kink, LLTV, incentives, etc. |
-| Gas / Routing cost | Transaction and routing fees incurred when moving funds. |
-| Swap fee | Percentage charged by a DEX for exchanging assets. |
-| Price impact | Slippage from trade size vs. available liquidity. |
-| Non-custodial | Actions are signed from your wallet; funds aren’t held by Rosetta. |
-| Rotate / Rebalance | Move funds between venues to improve net yield. |
-| Allocate | Place deposits/borrows according to a decision or policy. |
-| Latest Block | Block height/time used for the read (tiles and charts). |
-| Looping | Supply asset → borrow same asset → resupply (leveraged lend). |
+| Actionable Yield | Estimated APY after accounting for margin impact of a deposit. What you will actually earn, not what is currently displayed. |
+| Adaptive Curve IRM | Interest rate model that automatically adjusts its target rate based on market behavior over time. |
+| APY | Annual Percentage Yield. The annualized return on supplied assets, including compounding. |
+| Block-Level Indexing | Computing protocol state at every block rather than only when transactions occur. |
+| Borrow APY | The annualized rate borrowers pay on borrowed assets. |
+| Collateral | Asset locked by borrowers to secure a loan. |
+| Curator | Entity managing a vault's allocation strategy and risk parameters. |
+| Deposit Queue | The order in which a vault allocates new deposits across its underlying markets. |
+| EOA | Externally Owned Account. A standard wallet controlled by a private key. |
+| Event-Based Indexing | Updating state only when on-chain transactions occur. Misses continuous interest accrual between events. |
+| IRM | Interest Rate Model. Algorithm that determines borrow and supply rates based on utilization. |
+| Liquidation | Process where a borrower's collateral is seized when their position exceeds LLTV threshold. |
+| LLTV | Liquidation Loan-to-Value. The threshold at which a borrowing position becomes liquidatable. |
+| Loan Asset | Asset that lenders supply and borrowers receive. |
+| Main Wallet | User's externally owned account (EOA) that controls the smart account and receives withdrawals. |
+| Margin Impact | The change in APY caused by a deposit or withdrawal affecting utilization. |
+| Market | An isolated lending pool defined by a collateral/loan asset pair and risk parameters. |
+| Market Allocations | Distribution of a vault's deposits across its underlying markets. |
+| Oracle | Price feed used to value collateral and determine liquidation eligibility. |
+| Policies | On-chain rules defining which vaults and assets the Router can access for a user. |
+| Policy Upgrade | Process of updating smart account permissions to access new assets or vaults. Requires user signature. |
+| PPS | Price Per Share. The value of one vault share in terms of the underlying asset. Total assets divided by total shares. |
+| Rate At Target | The interest rate at target utilization (typically 90%). The anchor point for IRM calculations. |
+| Rebalancing | Moving capital from one vault to another when a better yield opportunity exists. |
+| Routing Signal | Decision output from the Router indicating deposit, rebalance, or hold. |
+| Shares | Tokens representing proportional ownership in a vault or market position. |
+| Smart Account | User-owned contract that holds routed funds and executes transactions. Also called sub-account. |
+| Sub-account | See Smart Account. |
+| Supply APY | The annualized rate lenders earn on supplied assets. |
+| Supply Caps | Maximum deposits a vault will accept per market. |
+| Target Utilization | The utilization rate an IRM optimizes toward, typically 80-90%. |
+| Total Assets | The total value a vault holds across all its market positions. |
+| Total Shares | Outstanding vault shares representing all depositor claims. |
+| Utilization | Ratio of borrowed assets to supplied assets in a market. |
+| Vault | Aggregation layer that allocates deposits across multiple markets according to a curator's strategy. |
+| Withdraw Queue | The order in which a vault sources funds for withdrawals from its underlying markets. |

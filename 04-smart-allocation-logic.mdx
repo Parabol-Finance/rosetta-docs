@@ -3,26 +3,38 @@ title: "Smart Allocation Logic"
 description: ""
 sidebarTitle: "Smart Allocation Logic"
 ---
-The allocation engine continuously observes all vaults under its scope and ranks them by real-time and predictive parameters, including:
 
-- Current APY : Real-time yield tracking
-- Liquidity & Utilization: Avoids yield compression
-- Gas Efficiency: Optimizes cost-to-yield ratio
-- Market Volatility: Prevents entry during noise spikes
-- Reliability Score: Prefers historically consistent vaults
-- Block-level Confirmation: Verified yield per block
+## Routing Logic
 
+The Routing Logic determines how capital is allocated across vaults. It answers: given the user's policies and current market conditions, where should funds be?
 
-Properties: 
-- The system has **no pre-set rebalance interval**. Reallocations occur strictly when the performance delta between vaults exceeds a threshold.
-- Large reallocations are automatically fragmented across multiple vaults to avoid negative supply impact and yield compression. Smaller deposits, when viable, are directed toward the single best-performing vault.
-- Every movement is deterministic, policy-governed, and performance-verified at the block level — eliminating discretionary behavior.
+### Decision Inputs
 
-You decide which vaults / protocol Rosetta allocates to:
+The Router evaluates:
 
-- Rosetta continuously indexes and monitors all vaults operating within HyperEVM, identifying those that demonstrate consistent and sustainable performance over time.
-- The allocation process remains fully user-driven — each user defines their own set of preferred vaults from Rosetta’s indexed list. Once the selection is made, Rosetta’s allocation engine takes over, autonomously distributing and rebalancing capital among the chosen vaults according to a dynamic performance-based algorithm.
-- In the current version, the router is available for USDT and HYPE. Hyperithm, MEV Capital, Gauntlet, and Felix Vaults are indexed as protocols.
+| Input | Source |
+| --- | --- |
+| Current APY per vault | Indexer (block-level) |
+| Post-deposit APY | Indexer (impact simulation) |
+| Available liquidity | Indexer |
+| User's enabled vaults | Policies |
+| Current allocation | Smart account state |
 
+### Signal Generation
 
-<img src="/images/rosetta_execution.png" alt="execution" width="400" />
+Based on these inputs, the Router generates allocation signals:
+
+- **Deposit signal**: Which vault should receive new deposits
+- **Rebalance signal**: Whether current allocation should shift to a different vault
+- **Hold signal**: Current allocation remains optimal
+
+Signals are generated only when improvement exceeds minimum thresholds. The Router does not rebalance for marginal gains.
+
+### Execution
+
+When a signal is generated:
+
+1. Router validates action against user's policies
+2. Transaction is submitted to user's smart account
+3. Smart account executes on-chain
+4. Rosetta sponsors gas costs

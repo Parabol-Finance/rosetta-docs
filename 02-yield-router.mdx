@@ -5,15 +5,35 @@ sidebarTitle: ""
 ---
 
 
-Rosetta’s Smart Yield Router is a fully non-custodial orchestration layer that routes user capital to the highest-performing vaults across HyperEVM. It continuously monitors vault performance on a block-by-block basis and reallocates dynamically to maintain optimal yield efficiency while preserving capital integrity.
+The Yield Router is a non-custodial allocation system that automatically routes capital across vaults to maximize yield.
 
-Unlike traditional optimizers, Rosetta does not tokenize deposits or custody assets. The router operates entirely through on-chain policies, orchestrating user-owned wallets and vaults without ever touching deposited funds.
+It consumes real-time data from the Indexer and executes allocation decisions through user-controlled smart accounts. Users define which vaults and assets the Router can access. The Router handles everything else: monitoring rates, evaluating opportunities, executing rebalances.
 
-## Onboarding
+### Components
 
-Users onboard by connecting their primary wallet (Metamask, Rabby, etc.). Upon connection, Rosetta automatically generates a **sub-account** (an on-chain wallet) linked to the user’s main address.
+The Router consists of three layers:
 
-This sub-account acts as the operational layer for all vault interactions — deposits, withdrawals, and reallocations — but remains fully controlled by the user’s primary wallet. The assets residing in the sub-account can only be withdrawn to the users primary wallet, protected by the policies, ensuring funds security.
+| Layer | Function |
+| --- | --- |
+| Smart Accounts | User-controlled accounts that hold funds and execute transactions |
+| Policies | On-chain rules defining permitted vaults, assets, and constraints |
+| Execution Engine | Monitors yields, evaluates rebalancing opportunities, executes allocations |
 
-![Subaccount](/images/rosetta_sub_account_creation.png)
+### Flow
 
+1. User connects wallet and creates a smart account (sub-account linked to their main wallet)
+2. User configures policies (selects which vaults, which assets their capital will flow into)
+3. User deposits assets into their smart account
+4. Router allocates capital to the highest-yielding permitted vault
+5. Router continuously monitors yields via the Indexer
+6. When a better opportunity exists, Router rebalances
+7. User withdraws to their main wallet at any time
+
+### What the Router Optimizes
+
+The Router seeks the highest sustainable yield within user-defined constraints. This means:
+
+- Evaluating current APY across all permitted vaults
+- Accounting for costs and impacts of moving capital
+- Filtering out unsustainable or artificially inflated yields
+- Respecting liquidity constraints and withdrawal reliability

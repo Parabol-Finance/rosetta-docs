@@ -4,41 +4,88 @@ description: ""
 sidebarTitle: ""
 ---
 
-Rosetta doesn't hold user assets. The router doesn’t operate as a smart contract vault but as an **autonomous policy engine** orchestrating interactions across vaults.
+## Smart Accounts
 
-All assets remain inside underlying vaults. The sub-accounts created under each user are fully self-custodial, managed and accessible solely by the primary wallet. All earned assets, rewards, and points belong to the user.
+Smart accounts are the orchestration layer of the Yield Router. They are user-owned contracts that hold funds and execute transactions on behalf of the user.
 
-<div style={{ transform: "scale(1)", transformOrigin: "center", height: "100%" }}>
-```mermaid
-flowchart TD
-    A["User connects wallet"] --> B["Rosetta auto-creates sub-account (linked wallet)"]
-    B --> C["User deposits vault-native asset (USDT0, USDe, HYPE)"]
-    C --> D["Yield Router triggers Allocation Engine"]
-    
-    D --> E["Rosetta considers:<br/>- Vault APY<br/>- Liquidity & utilization<br/>- Gas & volatility<br/>- Deposit caps<br/>- Margin impact<br/>- Reliability score"]
-    
-    E --> F["Rank vaults & compute optimal allocation vector"]
-    F --> G{"Deposit too large for top vault?"}
-    G -->|Yes| H["Split allocation across multiple vaults"]
-    G -->|No| I["Allocate fully to top vault"]
-    
-    H --> J["Execute deposits via sub-account"]
-    I --> J["Execute deposits via sub-account"]
-    J --> K["Funds now reside directly inside vaults"]
+### Why Smart Accounts
 
-    K --> L["Continuous monitoring loop (block-by-block)"]
-    L --> M["Read PPS changes → compute yield & performance deltas"]
-    M --> N{"Performance gap > Δthreshold?"}
-    N -->|Yes| O["Rebalance:<br/>Withdraw from underperforming vaults<br/>Redeploy to outperforming vaults"]
-    N -->|No| P["Maintain current allocation"]
+Traditional DeFi interactions require users to sign every transaction: deposits, withdrawals, rebalances. Automated routing would require either:
 
-    O --> Q["New equilibrium state established"]
-    P --> Q["New equilibrium state established"]
+- Custodial control (user gives funds to a third party)
+- Constant user interaction (defeating the purpose of automation)
 
-    Q --> R{"User requests withdrawal?"}
-    R -->|No| L
-    R -->|Yes| S["Identify vaults holding user funds"]
-    S --> T["Withdraw directly back to user main wallet"]
-   ```
-   </div>
-   
+Smart accounts solve this. The user retains ownership while granting limited, revocable permissions for specific actions.
+
+### Architecture
+
+Each user has two addresses:
+
+| Account | Description |
+| --- | --- |
+| Main Wallet (EOA) | The user's externally owned account, holds keys |
+| Sub-Account (Smart Account) | A contract controlled by the main wallet, holds routed funds |
+
+The smart account is deployed when a user first connects to Rosetta. It is owned by the user's main wallet and can only be controlled by it.
+
+![image.png](/images/v2/image%206.png)
+
+### Permissions
+
+The smart account **grants** Rosetta permission to:
+
+- Deposit into whitelisted vaults
+- Withdraw from vaults
+- Rebalance between vaults
+
+The smart account **does not grant** Rosetta permission to:
+
+- Withdraw to any address other than the user's main wallet
+- Access vaults or assets not explicitly enabled in policies
+- Modify policies without user signature
+
+### Withdrawal Constraint
+
+All withdrawals from the smart account can only be sent to the user's main wallet. This is enforced at the contract level. This eliminates an entire class of attack vectors. Even if Rosetta's systems were compromised, funds could only be sent back to the rightful owner.
+
+## Policies
+
+Policies are on-chain rules that define what the Yield Router is permitted to do with a user's funds. They are the user's control mechanism over automated execution.
+
+### What Policies Control
+
+| Permission | Description |
+| --- | --- |
+| Enabled Assets | Which assets the Router can allocate (e.g., USDT0, USDC) |
+| Enabled Vaults | Which vaults the Router can deposit into |
+| Withdrawal Destination | Fixed to user's main wallet (cannot be changed) |
+
+![image.png](/images/v2/image%207.png)
+
+### Enabling and Disabling
+
+When a user disables a vault:
+
+1. Policy state updates on-chain
+2. Router can no longer deposit into that vault
+3. Existing positions in that vault is withdrawn
+4. Router will reallocate funds on the next block
+
+When a user enables a vault:
+
+1. Policy state updates on-chain
+2. Router can now include that vault in allocation decisions
+3. If the new added vault has a better sustainable APY, Router reallocates to it
+
+### Policy Upgrades
+
+When Rosetta adds support for new assets or vaults, users must upgrade their policy to access them. This requires explicit user consent via signature.
+
+For example, if Rosetta adds USDe support:
+
+1. Rosetta deploys new policy version with USDe capability
+2. User sees "Policy upgrade available" in interface
+3. User reviews and signs the upgrade transaction
+4. New asset becomes available in user's policy configuration
+
+Users are never auto-enrolled in new assets or vaults.

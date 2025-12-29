@@ -1,10 +1,77 @@
 ---
-title: APY & Freshness
-description:
+title: "Interest Rate Models & APY"
+description: ""
 ---
-- **APY (live)** reads from the **latest processed block**; no manual refresh.
-- **Latest Block** displays the block height/time used.
-- Charts glide during quiet periods and step on parameter/tx changes.
-- When the chain briefly reorders blocks, we recalculate those blocks and refresh the reads.
 
----
+## Interest Rate Models
+
+Interest Rate Models (IRMs) determine borrow and supply rates based on market conditions. They are the pricing mechanism for capital in lending markets.
+
+### How IRMs Work
+
+Every lending market needs a mechanism to balance supply and demand. IRMs solve this by adjusting rates based on utilization:
+
+- When utilization is high (more borrowing demand), rates increase to attract suppliers and discourage borrowing
+- When utilization is low (excess supply), rates decrease to encourage borrowing
+
+The relationship between utilization and rates is defined by a curve. Different protocols implement different curves.
+
+### Types of IRMs
+
+**1- Fixed Curve Models**
+
+Rates follow a predefined curve with parameters set by governance. Typically a piecewise-linear function with a "kink" at optimal utilization, where rates begin increasing more steeply.
+
+**2- Adaptive Models**
+
+Rates follow a curve that adjusts itself over time based on market behavior. If utilization consistently runs above target, the curve shifts upward. If utilization runs below target, it shifts downward.
+
+**The Adaptation**
+
+The target rate (r₉₀%) itself shifts over time:
+
+- If utilization stays above 90%, r₉₀% gradually increases, pushing rates higher to attract more supply and discourage borrowing
+- If utilization stays below 90%, r₉₀% gradually decreases, lowering rates to encourage borrowing
+
+**From Borrow Rate to APY**
+
+IRMs output a borrow rate, typically expressed per second or per block. Borrow APY annualizes this rate with compounding:
+
+`Borrow APY = e^(borrowRate × secondsPerYear) − 1`
+
+Supply APY is derived from Borrow APY, scaled by utilization:
+
+`Supply APY = Borrow APY × Utilization × (1 − Protocol Fee)`
+
+Suppliers earn a share of borrower interest proportional to how much of the pool is actively borrowed.
+
+## The APY Problem
+
+APY displayed on most interfaces does not reflect what users actually earn.
+
+### Event-Based Updates
+
+Most dashboards update yield figures only when transactions occur: deposits, withdrawals, borrows, repayments. Between transactions, the displayed APY remains static.
+
+But interest accrues continuously. Every block, borrowers owe more and lenders are entitled to more. A dashboard showing 5.00% might be displaying a value from hours or days ago, while the actual rate has shifted with utilization.
+
+Displayed APY = Rate at last transaction
+Actual APY = Rate at current block
+
+**Quick example:**
+
+- **`13:02:00`** — Event‑based UI shows 12.8%.
+- **`13:02:15`** — Utilization softens (no tx); model implies 11.9%.
+- **`13:02:16`** — Rosetta already shows 11.9%.
+- **`13:03:40`** — First tx lands; event‑based UI finally updates to 11.9%.
+
+![image.png](/images/v2/image%203.png)
+
+### Market Impact
+
+The APY you see before depositing is not the APY you get after. Your deposit changes the market:
+
+- Depositing into a market increases supply, lowering utilization, lowering rates
+- Depositing into a vault triggers allocation, potentially spreading impact across markets
+
+A vault showing 5% APY might yield 4.7% after a large deposit. This "market impact" is invisible, but Rosetta considers it during it reallocations. 

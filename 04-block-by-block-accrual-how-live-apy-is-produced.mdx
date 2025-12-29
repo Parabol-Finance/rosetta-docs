@@ -1,68 +1,212 @@
 ---
-title: "Block-by-block accrual"
+title: "Indexer: Block-Level Accrual"
+description: ""
 ---
 
-| Section | Summary |
-| --- | --- |
-| Supply | `totalSupplyAssets`,`totalSupplyShares`|
-| Borrow | `totalBorrowAssets`,`totalBorrowShares`|
-|Timing: | `lastUpdate` |
-|Protocol: | `fee` |
-|Accrual on every block (even with no tx)| Compound borrow interest over elapsed time; mirror to supply; update `lastUpdate`. |
-|Key derived reads per market | Utilization `U = B / S`; Borrow APY from curve; Supply APY adjusts for fees. |
+## Indexer
 
-## Accrual on every block (even with no tx)
+## Block-Level Indexing
 
-<CodeGroup>
+Rosetta's Indexer computes the state of every tracked vault and market at every block.
 
-```python
-# Calculate time elapsed since last update
-elapsed = blockTimestamp - lastUpdate
+### The Problem with Event-Based Systems
 
-# Skip if no time has passed or no borrows exist
-if elapsed == 0 or totalBorrowAssets == 0:
-    pass  # no-op
+Most DeFi data infrastructure is event-based: state updates only when transactions occur. Between transactions, data goes stale.
 
-else:
-    # Compound borrow interest over elapsed time
-    interest = compound(totalBorrowAssets, borrowRate, elapsed)
-    
-    # Mirror the interest on both sides
-    totalBorrowAssets += interest
-    totalSupplyAssets += interest
-    lastUpdate = blockTimestamp
+But interest accrues every block. A market with no transactions still has borrowers owing more, lenders entitled to more, utilization shifting, and rates adjusting. Event-based systems miss all of this.
+
+### What Rosetta Does Differently
+
+Rosetta treats each block as the atomic unit of truth. Instead of waiting for events, the Indexer:
+
+1. **Accrues interest forward**: Computes what borrowers owe and lenders are entitled to at the current block, regardless of when the last transaction occurred
+2. **Recomputes utilization**: Calculates the current ratio of borrowed to supplied assets, reflecting accrued interest
+3. **Recalculates rates**: Runs the protocol's IRM logic to determine current Borrow APY and Supply APY
+4. **Updates vault state**: Rolls up market-level changes to compute current vault positions, PPS, and blended yields
+5. **Stores block-level snapshots**: Maintains a time series of state at block granularity
+
+### Why This Matters
+
+Block-level data enables:
+
+- **Accurate yield comparison**: Compare vaults using current rates, not stale snapshots
+- **Precise routing decisions**: The Yield Router acts on real-time data, not outdated signals
+- **Honest APY reporting**: Users see what they will actually earn, not what the rate was hours ago
+- **Backtesting with fidelity**: Historical analysis uses actual block-by-block state, not interpolated guesses
+
+The Indexer is the foundation that makes intelligent routing possible.
+
+### **How It Works**
+
+### Accrual Computation
+
+Interest accrues based on time elapsed and the current borrow rate. For each block, the Indexer computes:
+
+```jsx
+time_elapsed = current_timestamp - last_update_timestamp
+interest_factor = exp(borrow_rate * time_elapsed)
+
+total_borrowed = total_borrowed_previous * interest_factor
+total_supplied = total_supplied_previous + (total_borrowed - total_borrowed_previous)
 ```
 
-</CodeGroup>
+### Utilization and Rate Recalculation
 
-## Key derived reads per market
+With updated totals, utilization is recomputed:
 
-<Tabs>
-  <Tab title="Utilization Calculation">
-    ```python
-    # Calculate utilization ratio
-    utilization = totalBorrowAssets / totalSupplyAssets  # U = B / S
-    ```
-  </Tab>
-  <Tab title="APY Calculations">
-    ```python
-    # Get borrow APR from utilization curve
-    borrowApy = wTaylorCompounded(borrowRate, SECONDS_PER_YEAR)
-    
-    # Calculate supply APR (adjusted for fees)
-    supplyApy = wMulDown(wMulDown(borrowApy, utilization), 10 ** 18 - fee)
-    ```
-  </Tab>
-</Tabs>
-<Note>
-  _We rely on Morpho's off-chain APY calculations. For more details:_ https://docs.morpho.org/build/earn/tutorials/get-data#apy-native--rewards
-</Note>
+```jsx
+utilization = total_borrowed / total_supplied
+```
 
-<info>
-  **Why this matters**
+The Indexer then runs the protocol's IRM to get current rates. For an adaptive curve IRM:
 
-  * We **recompute on each block** using `lastUpdate → current block`, so APY **moves in quiet periods**, not only on transactions.
-  * `U = B/S` updates immediately after accrual, which flows into the **supply APR** calculation and into the chart.
-  * If a reorg touches recent blocks, we **replay accrual** over that window and re-stamp the **Latest Block**.
-</info>
+```jsx
+target_utilization = 0.9
+err = (utilization - target_utilization) / target_utilization
 
+*# Curve mechanism*
+if err < 0:
+    borrow_rate = ((1 - 1/C) * err + 1) * rate_at_target
+else:
+    borrow_rate = ((C - 1) * err + 1) * rate_at_target
+
+*# Adaptation mechanism*
+rate_at_target = rate_at_target_previous * exp(speed * err * time_elapsed)
+```
+
+Where `C = 4` (curve steepness) and `speed = 50` (adaptation speed).
+
+Supply rate derives from borrow rate:
+
+```jsx
+supply_rate = borrow_rate * utilization * (1 - protocol_fee)
+```
+
+### APY Conversion
+
+Rates are per-second. To convert to APY:
+
+```jsx
+seconds_per_year = 365 * 24 * 60 * 60
+borrow_apy = exp(borrow_rate * seconds_per_year) - 1
+supply_apy = exp(supply_rate * seconds_per_year) - 1
+```
+
+### Price Per Share (PPS)
+
+For markets and vaults, PPS tracks the value of each share over time:
+
+```jsx
+pps = total_assets / total_shares
+```
+
+As interest accrues, `total_assets` grows while `total_shares` remains constant (until deposits/withdrawals), causing PPS to increase.
+
+### Vault State Rollup
+
+Vaults hold shares in multiple markets. The Indexer values each position and aggregates:
+
+```jsx
+position_values = []
+
+for market in vault.markets:
+    market_pps = market.total_assets / market.total_shares
+    position_value = vault.shares_in_market[market] * market_pps
+    position_values.append(position_value) *# Add each position*
+
+*# After loop completes, vault_total_assets = sum of all positions*
+vault_total_assets = sum(position_values)
+vault_pps = vault_total_assets / vault_total_shares
+```
+
+Vault Supply APY is the weighted average of underlying market rates:
+
+```jsx
+weighted_rates = []
+
+for market in vault.markets:
+    weight = vault.position_value[market] / vault_total_assets
+    weighted_rate = market.supply_apy * weight
+    weighted_rates.append(weighted_rate)
+
+vault_supply_apy = sum(weighted_rates)
+```
+
+### Block Snapshot Schema
+
+Each block produces a snapshot stored with the following structure:
+
+```jsx
+MarketSnapshot = {
+    block_number: 22177570,
+    timestamp: 1734537602,
+    market_address: "0xd13b...04fc",
+    total_supplied: 3484707.2,        # USDC
+    total_borrowed: 2665432.8,        # USDC
+    utilization: 0.7644,              # 76.44%
+    borrow_apy: 0.0668,               # 6.68%
+    supply_apy: 0.0511,               # 5.11%
+    available_liquidity: 819274.4,   # USDC
+    rate_at_target: 0.0542            # 5.42%
+}
+
+VaultSnapshot = {
+    block_number: 22177570,
+    timestamp: 1734537602,
+    vault_address: "0x8a86...ea27",
+    total_assets: 52953204.18,        # USDC
+    total_shares: 51847293.62,        # feUSDC
+    pps: 1.0213,
+    supply_apy: 0.0465,               # 4.65%
+    market_allocations: {
+        "kHYPE/USDC": 38590000.0,     # 72.89%
+        "WHYPE/USDC": 10950000.0,     # 20.70%
+        "UBTC/USDC": 3240000.0,       # 6.13%
+        "PT-kHYPE/USDC": 142940.0     # 0.27%
+    }
+}
+```
+
+## What It Tracks
+
+The Indexer maintains continuous state for two entity types: markets and vaults.
+
+### Markets
+
+For each lending market, the Indexer tracks:
+
+| Field | Description |
+| --- | --- |
+| Total Supplied | Assets deposited by lenders |
+| Total Borrowed | Assets borrowed against collateral |
+| Utilization | Ratio of borrowed to supplied |
+| Borrow APY | Current annualized rate borrowers pay |
+| Supply APY | Current annualized rate lenders earn |
+| Available Liquidity | Withdrawable assets (supplied minus borrowed) |
+| LLTV | Liquidation threshold for the market |
+| Rate At Target | Current IRM target rate (for adaptive models) |
+
+### Vaults
+
+For each vault, the Indexer tracks:
+
+| Field | Description |
+| --- | --- |
+| Total Assets | Sum of all positions valued in underlying asset |
+| Total Shares | Outstanding vault shares |
+| PPS | Price per share (total assets / total shares) |
+| Supply APY | Weighted average of underlying market rates |
+| Market Allocations | Current distribution across markets |
+| Curator | Entity managing the vault strategy |
+| Deposit Queue | Order in which new deposits are allocated |
+| Withdraw Queue | Order in which withdrawals are sourced |
+
+### Update Frequency
+
+All metrics are recomputed every block. On HyperEVM with ~1 second block times, this means near real-time accuracy.
+
+Historical data is retained at block granularity, enabling:
+
+- Point-in-time queries at any block height
+- Time-series analysis of yield trends
+- Backtesting of routing strategies

@@ -1,0 +1,99 @@
+---
+title: "Using Rosetta"
+description: ""
+sidebarTitle: ""
+---
+
+## Connecting Your Wallet
+
+To start using Rosetta:
+
+1. Navigate to [app.rosetta.sh](https://app.rosetta.sh/)
+2. Click "Connect Wallet"
+3. Select your wallet provider
+4. Approve the connection
+
+After first connection, Rosetta will deploy a smart account (sub-account) linked to your wallet, following your signature. This is a one-time setup.
+
+![image.png](/images/v2/51f67e33-d52e-4548-a450-ad298e350224.png)
+
+---
+
+## Understanding Your Accounts
+
+After connecting, you have two accounts:
+
+| Account | Purpose |
+| --- | --- |
+| Connected Wallet | Your main wallet (EOA). Holds your keys. Receives withdrawals. |
+| Sub-account | Smart account that holds routed funds. Controlled by your main wallet. |
+
+Both addresses are visible in the Account section. Funds deposited into Rosetta are held in your sub-account, not by Rosetta.
+
+![image.png](/images/v2/image%208.png)
+
+---
+
+## Setting Your Policies
+
+Before depositing, configure which vaults the Router can access:
+
+1. Select an asset (e.g., USDT0)
+2. Enable or disable individual vaults
+3. Click Update and sign the transaction
+
+The Router will only allocate to enabled vaults. You can change policies at any time.
+
+![image.png](/images/v2/image%209.png)
+
+---
+
+## Depositing
+
+To deposit:
+
+1. Go to Overview
+2. Select asset and enter amount
+3. Click "Add Funds"
+4. Approve the transaction
+
+Funds transfer from your main wallet to your sub-account. The Router immediately allocates to the highest-yielding enabled vault.
+
+![image.png](/images/v2/image%2010.png)
+
+---
+
+## Monitoring Your Position
+
+### Overview
+
+Displays your current balance, active vault, APY, and a real-time yield chart comparing your enabled vaults.
+
+![image.png](/images/v2/image%2011.png)
+
+### Activities
+
+Lists all deposit, withdrawal, and rebalancing transactions with timestamps and block numbers.
+
+![image.png](/images/v2/image%2012.png)
+
+### Discover
+
+Browse all available vaults and markets tracked by the Indexer:
+
+- **Vaults**: Supply APY, total deposits, market allocation
+- **Markets**: Borrow APY, Supply APY, utilization, liquidity, LLTV
+
+![image.png](/images/v2/image%2013.png)
+
+---
+
+## Withdrawing
+
+To withdraw:
+
+1. Go to Overview
+2. Click "Redeem"
+3. Approve the transaction
+
+Funds return to your main wallet. Withdrawals can only go to your connected wallet address.

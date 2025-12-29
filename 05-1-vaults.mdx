@@ -2,19 +2,44 @@
 title: "Vaults"
 description: 
 ---
-Purpose: Choose where to supply right now.
 
-| **Field**   | **What it means**                           |
-| ------------------ | -------------------------------------------------- |
-| **Vault**          | Strategy anchor; verify you're on the right object |
-| **Supply APY**     | Display APY computed per block                     |
-| **Total Deposits** | Depth of the vault                                 |
-| **Latest Block**   | Freshness stamp                                    |
 
-## Workflow
+A vault is an aggregation layer that sits between lenders and markets. Instead of supplying directly to individual markets, users deposit into a vault. The vault allocates those deposits across multiple markets according to its strategy.
 
-1. Confirm **Latest Block** is current →
-2. Scan **APY (live)** line for **hold vs. spike** →
-3. Check **Total Deposits** matches sizing →
-4. Skim **Signals** for fresh constraints →
-5. **Supply**
+### Structure
+
+Each vault has:
+
+| Component | Description |
+| --- | --- |
+| Underlying asset | The asset the vault accepts (e.g., USDC, USDT0) |
+| Curator | The entity that manages allocation strategy and risk parameters |
+| Market allocations | The set of markets the vault supplies to and in what proportions |
+| Supply caps | Maximum deposits the vault will accept |
+
+![image.png](/images/v2/image%202.png)
+
+### Shares and Assets
+
+When you deposit into a vault, you receive vault shares representing your proportional claim on the vault's total assets.
+
+**Shares**: Tokens minted by the vault when you deposit. They represent ownership, not a fixed amount.
+
+**Assets**: The total value the vault holds across all its market positions, denominated in the underlying asset (e.g., USDC).
+
+The vault does not pay interest directly. Instead, as underlying markets accrue interest, total assets grow while total shares remain constant. This increases the Price Per Share (PPS):
+
+`PPS = Total Assets / Total Shares`
+
+Your shares stay the same. Their redeemable value increases.
+
+### Curators
+
+Curators are responsible for:
+
+- Selecting which markets the vault allocates to
+- Setting allocation weights and caps
+- Monitoring risk parameters (LLTV, collateral quality, utilization)
+- Rebalancing between markets
+
+Different curators have different strategies and risk profiles. 

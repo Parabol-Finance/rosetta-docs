@@ -1,24 +1,41 @@
 ---
-title: Markets
-description:
+title: "Lending Markets"
+description: ""
 ---
-## Fields
 
-| Field | What it means |
+A lending market is an isolated pool where lenders supply assets and borrowers take loans against collateral.
+
+Each market is defined by five parameters:
+
+| Parameter | Description |
 | --- | --- |
-| **Collateral assets** | Eligible collateral and **LLTV** |
-| **Loans** | Borrowable asset(s) |
-| **Borrow APY (live)** | Borrow rate per block |
-| **Liquidity** | Borrowable capacity |
-| **Utilization** | % of capacity in use |
-| **LLTV** | Max borrow against collateral |
-| **Latest Block** | Freshness stamp |
+| Collateral asset | Asset borrowers lock (e.g., HYPE, ETH, BTC) |
+| Loan asset | Asset lenders supply and borrowers receive (e.g., USDC, USDT0) |
+| LLTV | Liquidation Loan-to-Value, threshold at which positions become liquidatable |
+| Oracle | Price feed used to value collateral |
+| IRM | Interest Rate Model, determines rates based on utilization |
 
-## Workflow
+![image.png](/images/v2/image%201.png)
 
-1. Read **Borrow APY (live)** line — look for **hold vs. spike** →
-2. Check **Liquidity** ≥ your intended size (watch caps/queues) →
-3. Check **Utilization** band — avoid extremes if sizing; note sensitivity →
-4. Validate **LLTV** headroom on your collateral (leave a buffer) →
-5. If pairing with a supply leg, confirm **net spread after fees/impact** ≥ 0 →
-6. **Borrow**
+**Utilization**
+
+Utilization is the ratio of borrowed assets to total supplied assets:
+
+`Utilization = Total Borrowed / Total Supplied`
+
+`Supply APY = Borrow APY × Utilization`
+
+Utilization drives rates. Higher utilization means higher rates. Lower utilization means lower rates.
+
+**Liquidity**
+
+`Available liquidity = Total Supplied - Total Borrowed`
+
+This is what's actually can be borrowed at any moment. When utilization is high, available liquidity is low.
+
+**Price Per Share (PPS)**
+Lenders receive shares representing their claim on the pool. As interest accrues, total assets grow while shares stay constant. The ratio (assets/shares) increases over time. This is how yield is realized without explicit payments.
+
+**Isolation**
+
+Markets are isolated. A WHYPE/USDC market and a kHYPE/USDC market share nothing: different collateral, different risk parameters, different utilization. Bad debt in one market does not affect others.

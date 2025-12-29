@@ -1,49 +1,35 @@
 ---
 title: "Rosetta"
 description: "A block-level yield router"
-sidebarTitle: "Overview"
+sidebarTitle: "Introduction"
 ---
 
-## Overview
+## Introduction
 
-Rosetta is the block‑level yield router for Hyperliquid (HyperCore × HyperEVM). We index funding and carry flows across vaults and markets, price execution risk in real time, and route stablecoin capital to the best risk‑adjusted yield — non‑custodially, API‑first.
+### What is Rosetta
 
-Rosetta reads Hyperliquid markets and vaults **every block**, distilling complex on-chain data into a clean, actionable user interface: **live APY, deposits, utilization, liquidity, LLTV,** and **latest block** — giving you the complete picture at a glance.
-Most lending markets only refresh when transactions occur; Rosetta updates **every block** — giving you the true current state, not just stale snapshots from the last trade.
+Rosetta is yield infrastructure for Hyperliquid, built to make on-chain yield transparent and actionable.
 
+It consists of two core components:
 
-Use Rosetta to:
-  1. See which vault or market is best to lend and borrow right-now.
-  2. Avoid entering on fading spikes.
-  3. Allocate with confidence. You’re acting on the **_truest_** live data.
+**Indexer**: A block-level data infrastructure that tracks lending markets, vaults, and yields continuously. Computes state every block for accurate APY reporting, utilization tracking, and liquidity monitoring.
 
-## Why Rosetta
-We recompute **APY every block** and stamp each view with **Latest Block** so you know what’s current and what’s not.
+**Yield Router**: A non-custodial allocation system that routes capital across vaults based on real-time yield data, user-defined policies, and cost-aware, lightning fast execution logic. 
 
-|               | Event-only systems        | **Rosetta**                                       |
-| ------------- | ---------------------------- | ------------------------------------------------- |
-| APY freshness | Updates on transactions only | **Updates every block** (even in quiet periods)   |
-| Quiet periods | Flat line, then sudden jump  | **Smooth glide** that reflects implied rate drift |
-| Trust signal  | No explicit timebase         | **Latest Block** visible on every tile/detail     |
-| Comparability | Screens can be out of sync   | **Single clock** across vaults/markets            |
-| Actionability | You react after the snap     | You act on **what’s true now**                    |
+The Indexer provides the data layer. The Yield Router consumes that data to make allocation decisions and execute them through user-controlled smart accounts. Together, they form infrastructure that applications (including the Router itself) are built on.
 
-**Quick example:**
+![image.png](/images/v2/image.png)
 
-- `13:02:00` — Event‑based UI shows 12.8%.
-- `13:02:15` — Utilization softens (no tx); model implies 11.9%.
-- `13:02:20` — Rosetta already shows 11.9%.
-- `13:02:40` — First tx lands; event‑based UI finally updates to 11.9%.
+### Principles
 
-**Result**: 20–40s of better information—often enough to avoid a bad entry.
+**Non-custodial**: Users operate through smart accounts (sub-accounts) that they control. Rosetta orchestrates deposits and rebalances within these accounts, but withdrawals can only be sent to the user's main wallet. Funds never sit in Rosetta's custody.
 
-![Image Pn](/images/image.png)
+**Block-level precision**: Interest accrues every block. The Indexer reflects this by computing vault and market states at block cadence, enabling accurate yield comparisons and APY reporting.
 
-<CardGroup cols={2}>
-  <Card title="← Previous" href="/02-why-rosetta">
-    Why Rosetta
-  </Card>
-  <Card title="Next →" href="/04-block-by-block-accrual">
-    Block by Block Accrual
-  </Card>
-</CardGroup>
+**User-controlled policies**: Users define which vaults and assets the Router can access. These policies are stored on-chain and enforced programmatically. Changing them requires the user's signature. 
+
+**Transparent by default**: Every yield figure, allocation decision, and rebalancing action is derived from on-chain data and verifiable. Users see where returns come from, not just what they are.
+
+**Fully automated**: Once policies are set, the Router handles allocation and rebalancing without manual intervention. Users define the rules; Rosetta executes within them.
+
+**Sponsored execution**: Rosetta covers all gas costs for deposits, withdrawals, and rebalancing. The APY users see is the APY they earn. No hidden transaction costs eating into returns.
