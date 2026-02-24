@@ -17,15 +17,6 @@
             "group": "Rosetta",
             "pages": ["01-overview"]
           },
-          
-          {
-            "group": "Core Concepts",
-            "pages": [
-              "05-2-markets","05-1-vaults",
-              "04-block-by-block-accrual-how-live-apy-is-produced",
-              "05-3-apy-freshness-blockbyblock"
-            ]
-          },
           {
             "group": "Yield Router",
             "pages": [
@@ -34,16 +25,32 @@
               "04-smart-allocation-logic",
               "05-deposits-withdrawals",
               "06-using-rosetta",
-              "smart-contracts-and-security",
-              "fees",
-              "data-dashboards"
+              "terminal"
             ]
           },
           {
+            "group": "Markets & Yields",
+            "pages": [
+              "05-2-markets",
+              "05-1-vaults",
+              "04-block-by-block-accrual-how-live-apy-is-produced",
+              "05-3-apy-freshness-blockbyblock"
+            ]
+          },
+          {
+            "group": "Risk Intelligence",
+            "pages": ["circular"]
+          },
+          {
             "group": "Reference",
-            "pages": ["07-glossary", "terms"]
+            "pages": [
+              "smart-contracts-and-security",
+              "fees",
+              "data-dashboards",
+              "07-glossary",
+              "terms"
+            ]
           }
-          
         ]
       }
     ]

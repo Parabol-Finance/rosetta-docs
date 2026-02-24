@@ -1,6 +1,6 @@
 ---
 title: "Rosetta"
-description: "A block-level yield router"
+description: "Multi-chain yield infrastructure"
 sidebarTitle: "Introduction"
 ---
 
@@ -8,17 +8,28 @@ sidebarTitle: "Introduction"
 
 ### What is Rosetta
 
-Rosetta is yield infrastructure for Hyperliquid, built to make on-chain yield transparent and actionable.
+Rosetta is yield infrastructure for DeFi, built to make on-chain yield transparent and actionable across chains and protocols.
 
-It consists of two core components:
+It currently operates on **HyperEVM** and **Base**, routing capital across **Morpho** and **Aave** markets and vaults. It supports **USDT0** and **USDC** as routable assets.
 
-**Indexer**: A block-level data infrastructure that tracks lending markets, vaults, and yields continuously. Computes state every block for accurate APY reporting, utilization tracking, and liquidity monitoring.
+Rosetta consists of two core components:
 
-**Yield Router**: A non-custodial allocation system that routes capital across vaults based on real-time yield data, user-defined policies, and cost-aware, lightning fast execution logic. 
+**Indexer**: A block-level data infrastructure that tracks lending markets, vaults, and yields continuously across supported chains. Computes state every block for accurate APY reporting, utilization tracking, and liquidity monitoring.
+
+**Yield Router**: A non-custodial allocation system that routes capital across vaults and lending markets based on real-time yield data, user-defined policies, and cost-aware execution logic.
 
 The Indexer provides the data layer. The Yield Router consumes that data to make allocation decisions and execute them through user-controlled smart accounts. Together, they form infrastructure that applications (including the Router itself) are built on.
 
-![image.png](/images/v2/image.png)
+<Frame>
+  <img src="/images/v3/introduction.png" />
+</Frame>
+
+### Supported Chains and Protocols
+
+| Chain | Protocols | Assets |
+| --- | --- | --- |
+| HyperEVM | Morpho, Aave | USDT0, USDC |
+| Base | Morpho | USDC |
 
 ### Principles
 
@@ -26,10 +37,12 @@ The Indexer provides the data layer. The Yield Router consumes that data to make
 
 **Block-level precision**: Interest accrues every block. The Indexer reflects this by computing vault and market states at block cadence, enabling accurate yield comparisons and APY reporting.
 
-**User-controlled policies**: Users define which vaults and assets the Router can access. These policies are stored on-chain and enforced programmatically. Changing them requires the user's signature. 
+**User-controlled policies**: Users define which vaults, protocols, and assets the Router can access. These policies are stored on-chain and enforced programmatically. Changing them requires the user's signature.
 
 **Transparent by default**: Every yield figure, allocation decision, and rebalancing action is derived from on-chain data and verifiable. Users see where returns come from, not just what they are.
 
 **Fully automated**: Once policies are set, the Router handles allocation and rebalancing without manual intervention. Users define the rules; Rosetta executes within them.
 
 **Sponsored execution**: Rosetta covers all gas costs for deposits, withdrawals, and rebalancing. The APY users see is the APY they earn. No hidden transaction costs eating into returns.
+
+**Multi-chain**: Rosetta operates across multiple chains, enabling users to access the best yield opportunities regardless of which network they originate from.

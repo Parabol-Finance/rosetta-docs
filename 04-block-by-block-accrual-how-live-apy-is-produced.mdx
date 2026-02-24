@@ -167,13 +167,49 @@ VaultSnapshot = {
 }
 ```
 
+## Aave Accrual
+
+The Indexer also tracks Aave markets using the Aave V3 accrual model. While the principles are the same — compute state at every block — the mechanics differ from Morpho.
+
+### Aave Interest Accrual
+
+Aave tracks cumulative interest via a **liquidity index**, a monotonically increasing multiplier:
+
+```jsx
+time_elapsed = current_timestamp - last_update_timestamp
+linear_rate = variable_borrow_rate * time_elapsed / seconds_per_year
+
+# Liquidity index update (ray math, 10^27 precision)
+liquidity_index = liquidity_index_previous * (1 + linear_rate * utilization)
+```
+
+A supplier's actual balance at any block is:
+
+```jsx
+actual_balance = scaled_balance * liquidity_index
+```
+
+The `scaled_balance` is set at deposit time and remains constant. As the liquidity index grows, the actual balance increases — this is how Aave accrues yield.
+
+### Aave Supply APY
+
+```jsx
+supply_apy = (1 + variable_borrow_rate * utilization / seconds_per_year) ^ seconds_per_year - 1
+```
+
+The Indexer computes this at every block, capturing rate changes that occur between transactions.
+
+### Multi-Chain Indexing
+
+The same block-level approach applies across all supported chains. On Base, the Indexer tracks Morpho markets using the same accrual computation described above. Each chain maintains its own snapshot timeline indexed by block number.
+
 ## What It Tracks
 
-The Indexer maintains continuous state for two entity types: markets and vaults.
+The Indexer maintains continuous state for three entity types: Morpho markets, Morpho vaults, and Aave reserves.
 
-### Markets
+### Morpho Markets
 
-For each lending market, the Indexer tracks:
+For each Morpho lending market, the Indexer tracks:
 
 | Field | Description |
 | --- | --- |
@@ -186,7 +222,7 @@ For each lending market, the Indexer tracks:
 | LLTV | Liquidation threshold for the market |
 | Rate At Target | Current IRM target rate (for adaptive models) |
 
-### Vaults
+### Morpho Vaults
 
 For each vault, the Indexer tracks:
 
@@ -201,12 +237,28 @@ For each vault, the Indexer tracks:
 | Deposit Queue | Order in which new deposits are allocated |
 | Withdraw Queue | Order in which withdrawals are sourced |
 
+### Aave Reserves
+
+For each Aave reserve, the Indexer tracks:
+
+| Field | Description |
+| --- | --- |
+| Total Supply | Assets deposited by suppliers |
+| Total Borrowed | Assets borrowed from the pool |
+| Utilization | Ratio of borrowed to supplied |
+| Supply APY | Current annualized rate suppliers earn |
+| Variable Borrow APY | Current annualized rate borrowers pay |
+| Liquidity Index | Cumulative interest multiplier |
+| Available Liquidity | Withdrawable assets |
+| aToken Address | Interest-bearing token contract |
+
 ### Update Frequency
 
-All metrics are recomputed every block. On HyperEVM with ~1 second block times, this means near real-time accuracy.
+All metrics are recomputed every block. On HyperEVM with ~1 second block times, this means near real-time accuracy. On Base, block times are ~2 seconds.
 
 Historical data is retained at block granularity, enabling:
 
 - Point-in-time queries at any block height
 - Time-series analysis of yield trends
 - Backtesting of routing strategies
+- Cross-chain yield comparison at synchronized timestamps

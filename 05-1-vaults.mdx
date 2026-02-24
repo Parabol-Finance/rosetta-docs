@@ -1,8 +1,7 @@
 ---
 title: "Vaults"
-description: 
+description:
 ---
-
 
 A vault is an aggregation layer that sits between lenders and markets. Instead of supplying directly to individual markets, users deposit into a vault. The vault allocates those deposits across multiple markets according to its strategy.
 
@@ -17,7 +16,9 @@ Each vault has:
 | Market allocations | The set of markets the vault supplies to and in what proportions |
 | Supply caps | Maximum deposits the vault will accept |
 
-![image.png](/images/v2/image%202.png)
+<Frame>
+  <img src="/images/v2/image 2.png" />
+</Frame>
 
 ### Shares and Assets
 
@@ -42,4 +43,10 @@ Curators are responsible for:
 - Monitoring risk parameters (LLTV, collateral quality, utilization)
 - Rebalancing between markets
 
-Different curators have different strategies and risk profiles. 
+Different curators have different strategies and risk profiles. Some vaults charge management fees on yield.
+
+### Whitelisted Vaults
+
+Rosetta routes capital only to whitelisted vaults across supported chains and assets. Vaults are available on both **HyperEVM** (USDT0 and USDC) and **Base** (USDC).
+
+New vaults are added as they meet Rosetta's risk and liquidity criteria. Users must enable new vaults in their policies before the Router can allocate to them. The current set of available vaults is visible in the Policies section of the app.
