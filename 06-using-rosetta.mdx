@@ -10,18 +10,31 @@ To start using Rosetta:
 
 1. Navigate to [app.rosetta.sh](https://app.rosetta.sh/)
 2. Click "Connect Wallet"
-3. Select your wallet provider
+3. Select your wallet provider (MetaMask, Coinbase, Rainbow, or WalletConnect)
 4. Approve the connection
 
-After first connection, Rosetta will deploy a smart account (sub-account) linked to your wallet, following your signature. This is a one-time setup.
+Rosetta uses Privy for wallet authentication, supporting multiple wallet providers.
+
+After first connection, Rosetta will deploy a smart account (sub-account) linked to your wallet. This is a one-time setup per chain.
 
 ![image.png](/images/v2/51f67e33-d52e-4548-a450-ad298e350224.png)
 
 ---
 
+## Selecting a Chain
+
+Use the chain selector in the top navigation to switch between supported chains:
+
+- **HyperEVM**: Morpho and Aave markets and vaults, supports USDT0 and USDC
+- **Base**: Morpho vaults, supports USDC
+
+Your selection persists across sessions. Each chain has its own sub-account, policies, and balances.
+
+---
+
 ## Understanding Your Accounts
 
-After connecting, you have two accounts:
+After connecting, you have two accounts per chain:
 
 | Account | Purpose |
 | --- | --- |
@@ -36,13 +49,14 @@ Both addresses are visible in the Account section. Funds deposited into Rosetta 
 
 ## Setting Your Policies
 
-Before depositing, configure which vaults the Router can access:
+Before depositing, configure which vaults and protocols the Router can access:
 
-1. Select an asset (e.g., USDT0)
-2. Enable or disable individual vaults
-3. Click Update and sign the transaction
+1. Select an asset (USDT0 or USDC on HyperEVM; USDC on Base)
+2. Enable or disable individual Morpho vaults
+3. Enable or disable Aave markets
+4. Click Update and sign the transaction
 
-The Router will only allocate to enabled vaults. You can change policies at any time.
+The Router will only allocate to enabled vaults and markets. You can change policies at any time.
 
 ![image.png](/images/v2/image%209.png)
 
@@ -53,11 +67,12 @@ The Router will only allocate to enabled vaults. You can change policies at any 
 To deposit:
 
 1. Go to Overview
-2. Select asset and enter amount
-3. Click "Add Funds"
-4. Approve the transaction
+2. Select your asset (USDT0 or USDC)
+3. Enter amount (minimum 10 USD equivalent)
+4. Click "Add Funds"
+5. Approve the transaction
 
-Funds transfer from your main wallet to your sub-account. The Router immediately allocates to the highest-yielding enabled vault.
+Funds transfer from your main wallet to your sub-account. The Router immediately allocates to the highest-yielding enabled vault or market.
 
 ![image.png](/images/v2/image%2010.png)
 
@@ -67,13 +82,13 @@ Funds transfer from your main wallet to your sub-account. The Router immediately
 
 ### Overview
 
-Displays your current balance, active vault, APY, and a real-time yield chart comparing your enabled vaults.
+Displays your current balance across all protocols, active vault or market, APY, and a real-time yield chart comparing your enabled vaults.
 
 ![image.png](/images/v2/image%2011.png)
 
 ### Activities
 
-Lists all deposit, withdrawal, and rebalancing transactions with timestamps and block numbers.
+Lists all deposit, withdrawal, and rebalancing transactions with timestamps, block numbers, and protocol labels.
 
 ![image.png](/images/v2/image%2012.png)
 
@@ -81,8 +96,9 @@ Lists all deposit, withdrawal, and rebalancing transactions with timestamps and 
 
 Browse all available vaults and markets tracked by the Indexer:
 
-- **Vaults**: Supply APY, total deposits, market allocation
+- **Vaults**: Supply APY, total deposits, market allocation, curator
 - **Markets**: Borrow APY, Supply APY, utilization, liquidity, LLTV
+- **Aave**: Supply APY, utilization
 
 ![image.png](/images/v2/image%2013.png)
 
@@ -96,4 +112,4 @@ To withdraw:
 2. Click "Redeem"
 3. Approve the transaction
 
-Funds return to your main wallet. Withdrawals can only go to your connected wallet address.
+Funds return to your main wallet on the same chain. Withdrawals can only go to your connected wallet address.

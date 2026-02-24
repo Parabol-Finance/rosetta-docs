@@ -6,15 +6,19 @@ sidebarTitle: ""
 
 ### Deposits
 
-1. Transfer assets from main wallet to smart account
-2. Router allocates to optimal vault based on current yields
+1. Select chain (HyperEVM or Base)
+2. Select asset (USDT0 or USDC on HyperEVM; USDC on Base)
+3. Transfer assets from main wallet to smart account
+4. Router allocates to the optimal vault or market based on current yields
 
-Allocation is immediate. The Router selects the highest-yielding vault from the user's enabled set, accounting for margin impact.
+Allocation is immediate. The Router selects the highest-yielding option from the user's enabled set, accounting for margin impact. Minimum deposit is 10 USD equivalent.
+
+Deposits are routed to the highest-yielding option across Morpho and Aave markets on the selected chain.
 
 ### Withdrawals
 
 1. Request withdrawal
-2. Router exits vault position
-3. Assets return to main wallet
+2. Router exits vault or market position
+3. Assets return to main wallet on the same chain
 
 Withdrawals can only go to the user's main wallet. This is enforced at the contract level.

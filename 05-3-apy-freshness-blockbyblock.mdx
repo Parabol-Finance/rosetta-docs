@@ -18,13 +18,15 @@ The relationship between utilization and rates is defined by a curve. Different 
 
 ### Types of IRMs
 
+Rosetta tracks markets across protocols that use different IRM architectures.
+
 **1- Fixed Curve Models**
 
 Rates follow a predefined curve with parameters set by governance. Typically a piecewise-linear function with a "kink" at optimal utilization, where rates begin increasing more steeply.
 
-**2- Adaptive Models**
+**2- Adaptive Models (Morpho)**
 
-Rates follow a curve that adjusts itself over time based on market behavior. If utilization consistently runs above target, the curve shifts upward. If utilization runs below target, it shifts downward.
+Rates follow a curve that adjusts itself over time based on market behavior. If utilization consistently runs above target, the curve shifts upward. If utilization runs below target, it shifts downward. Used by Morpho markets on both HyperEVM and Base.
 
 **The Adaptation**
 
@@ -32,6 +34,15 @@ The target rate (r₉₀%) itself shifts over time:
 
 - If utilization stays above 90%, r₉₀% gradually increases, pushing rates higher to attract more supply and discourage borrowing
 - If utilization stays below 90%, r₉₀% gradually decreases, lowering rates to encourage borrowing
+
+**3- Aave Variable Rate Model**
+
+Aave uses a variable rate model with two slopes:
+
+- **Below optimal utilization**: rates increase gradually along a base slope
+- **Above optimal utilization**: rates increase steeply along a second slope to incentivize repayment
+
+The model parameters (base rate, slope 1, slope 2, optimal utilization) are set per reserve by governance. Unlike Morpho's adaptive model, these parameters do not self-adjust — they are fixed until governance changes them.
 
 **From Borrow Rate to APY**
 
@@ -43,7 +54,7 @@ Supply APY is derived from Borrow APY, scaled by utilization:
 
 `Supply APY = Borrow APY × Utilization × (1 − Protocol Fee)`
 
-Suppliers earn a share of borrower interest proportional to how much of the pool is actively borrowed.
+Suppliers earn a share of borrower interest proportional to how much of the pool is actively borrowed. This formula applies to both Morpho and Aave markets.
 
 ## The APY Problem
 

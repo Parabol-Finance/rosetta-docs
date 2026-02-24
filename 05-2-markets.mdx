@@ -3,7 +3,11 @@ title: "Lending Markets"
 description: ""
 ---
 
-A lending market is an isolated pool where lenders supply assets and borrowers take loans against collateral.
+Rosetta routes capital to lending markets across two protocols: **Morpho** and **Aave**. Each protocol has a different market architecture.
+
+## Morpho Markets
+
+A Morpho lending market is an isolated pool where lenders supply assets and borrowers take loans against collateral.
 
 Each market is defined by five parameters:
 
@@ -15,7 +19,9 @@ Each market is defined by five parameters:
 | Oracle | Price feed used to value collateral |
 | IRM | Interest Rate Model, determines rates based on utilization |
 
-![image.png](/images/v2/image%201.png)
+<Frame>
+  <img src="/images/v2/image 1.png" />
+</Frame>
 
 **Utilization**
 
@@ -23,7 +29,7 @@ Utilization is the ratio of borrowed assets to total supplied assets:
 
 `Utilization = Total Borrowed / Total Supplied`
 
-`Supply APY = Borrow APY × Utilization`
+`Supply APY = Borrow APY × Utilization × (1 − Fee)`
 
 Utilization drives rates. Higher utilization means higher rates. Lower utilization means lower rates.
 
@@ -31,11 +37,36 @@ Utilization drives rates. Higher utilization means higher rates. Lower utilizati
 
 `Available liquidity = Total Supplied - Total Borrowed`
 
-This is what's actually can be borrowed at any moment. When utilization is high, available liquidity is low.
+This is what can actually be borrowed at any moment. When utilization is high, available liquidity is low.
 
 **Price Per Share (PPS)**
+
 Lenders receive shares representing their claim on the pool. As interest accrues, total assets grow while shares stay constant. The ratio (assets/shares) increases over time. This is how yield is realized without explicit payments.
 
 **Isolation**
 
 Markets are isolated. A WHYPE/USDC market and a kHYPE/USDC market share nothing: different collateral, different risk parameters, different utilization. Bad debt in one market does not affect others.
+
+Morpho markets are available on both **HyperEVM** and **Base**.
+
+## Aave Markets
+
+Aave uses a **pooled lending model** where multiple assets share a single lending pool. Unlike Morpho's isolated markets, Aave pools aggregate supply and demand across assets.
+
+| Parameter | Description |
+| --- | --- |
+| Reserve asset | The asset being supplied and borrowed (e.g., USDT0, USDC) |
+| aToken | Interest-bearing token received when supplying (represents your deposit + accrued interest) |
+| Variable rate model | Interest rate determined by pool utilization with configurable slope parameters |
+| Liquidity index | Cumulative multiplier tracking total interest accrued since pool inception |
+
+**How Aave Differs from Morpho**
+
+| Aspect | Morpho | Aave |
+| --- | --- | --- |
+| Architecture | Isolated markets per collateral/loan pair | Pooled lending across assets |
+| Interest tracking | Price Per Share (PPS) | Liquidity index + aToken balance |
+| Rate model | Adaptive Curve IRM (self-adjusting) | Variable rate with configurable slopes |
+| Risk isolation | Full — each market independent | Shared pool — oracle risk affects all assets |
+
+The Yield Router evaluates Aave supply APY alongside Morpho vault APY when making allocation decisions.

@@ -19,29 +19,32 @@ Smart accounts solve this. The user retains ownership while granting limited, re
 
 ### Architecture
 
-Each user has two addresses:
+Each user has two addresses per chain:
 
 | Account | Description |
 | --- | --- |
 | Main Wallet (EOA) | The user's externally owned account, holds keys |
 | Sub-Account (Smart Account) | A contract controlled by the main wallet, holds routed funds |
 
-The smart account is deployed when a user first connects to Rosetta. It is owned by the user's main wallet and can only be controlled by it.
+The smart account is deployed when a user first connects to Rosetta. It is owned by the user's main wallet and can only be controlled by it. On multi-chain setups, a separate sub-account exists on each supported chain.
 
-![image.png](/images/v2/image%206.png)
+<Frame>
+  <img src="/images/v2/image 6.png" />
+</Frame>
 
 ### Permissions
 
 The smart account **grants** Rosetta permission to:
 
-- Deposit into whitelisted vaults
-- Withdraw from vaults
-- Rebalance between vaults
+- Deposit into whitelisted Morpho vaults
+- Supply to enabled Aave markets
+- Withdraw from vaults and markets
+- Rebalance between vaults and across protocols
 
 The smart account **does not grant** Rosetta permission to:
 
 - Withdraw to any address other than the user's main wallet
-- Access vaults or assets not explicitly enabled in policies
+- Access vaults, markets, or protocols not explicitly enabled in policies
 - Modify policies without user signature
 
 ### Withdrawal Constraint
@@ -57,35 +60,42 @@ Policies are on-chain rules that define what the Yield Router is permitted to do
 | Permission | Description |
 | --- | --- |
 | Enabled Assets | Which assets the Router can allocate (e.g., USDT0, USDC) |
-| Enabled Vaults | Which vaults the Router can deposit into |
+| Enabled Vaults | Which Morpho vaults the Router can deposit into |
+| Enabled Protocols | Which protocols are active (Morpho, Aave) |
 | Withdrawal Destination | Fixed to user's main wallet (cannot be changed) |
 
-![image.png](/images/v2/image%207.png)
+<Frame>
+  <img src="/images/v3/architecture.png" />
+</Frame>
 
 ### Enabling and Disabling
 
-When a user disables a vault:
+When a user disables a vault or protocol:
 
 1. Policy state updates on-chain
-2. Router can no longer deposit into that vault
-3. Existing positions in that vault is withdrawn
+2. Router can no longer deposit into that vault or market
+3. Existing positions in that vault are withdrawn
 4. Router will reallocate funds on the next block
 
-When a user enables a vault:
+When a user enables a vault or protocol:
 
 1. Policy state updates on-chain
-2. Router can now include that vault in allocation decisions
-3. If the new added vault has a better sustainable APY, Router reallocates to it
+2. Router can now include that vault or market in allocation decisions
+3. If the newly enabled option has a better sustainable APY, Router reallocates to it
 
 ### Policy Upgrades
 
-When Rosetta adds support for new assets or vaults, users must upgrade their policy to access them. This requires explicit user consent via signature.
+When Rosetta adds support for new assets, protocols, or chains, users must upgrade their policy to access them. This requires explicit user consent via signature.
 
-For example, if Rosetta adds USDe support:
+For example, when Rosetta added Base chain support:
 
-1. Rosetta deploys new policy version with USDe capability
-2. User sees "Policy upgrade available" in interface
+1. Rosetta deployed new policy version with Base chain capability
+2. User sees "Upgrade available" in interface
 3. User reviews and signs the upgrade transaction
-4. New asset becomes available in user's policy configuration
+4. Base chain vaults become available in user's policy configuration
 
-Users are never auto-enrolled in new assets or vaults.
+Users are never auto-enrolled in new assets, protocols, or chains.
+
+### Risk Intelligence
+
+Rosetta's risk intelligence layer, [Circular](/circular), provides analytical tools for evaluating vault and market risk profiles before configuring policies.

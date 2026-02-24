@@ -4,10 +4,9 @@ description: ""
 sidebarTitle: ""
 ---
 
+The Yield Router is a non-custodial allocation system that automatically routes capital across vaults and lending markets to maximize yield.
 
-The Yield Router is a non-custodial allocation system that automatically routes capital across vaults to maximize yield.
-
-It consumes real-time data from the Indexer and executes allocation decisions through user-controlled smart accounts. Users define which vaults and assets the Router can access. The Router handles everything else: monitoring rates, evaluating opportunities, executing rebalances.
+It consumes real-time data from the Indexer and executes allocation decisions through user-controlled smart accounts. Users define which vaults, protocols, and chains the Router can access. The Router handles everything else: monitoring rates, evaluating opportunities, executing rebalances.
 
 ### Components
 
@@ -15,25 +14,29 @@ The Router consists of three layers:
 
 | Layer | Function |
 | --- | --- |
-| Smart Accounts | User-controlled accounts that hold funds and execute transactions |
-| Policies | On-chain rules defining permitted vaults, assets, and constraints |
-| Execution Engine | Monitors yields, evaluates rebalancing opportunities, executes allocations |
+| Smart Accounts | User-controlled accounts that hold funds and execute transactions, deployed per chain |
+| Policies | On-chain rules defining permitted vaults, protocols, assets, and constraints |
+| Execution Engine | Monitors yields across chains and protocols, evaluates rebalancing opportunities, executes allocations |
 
 ### Flow
 
 1. User connects wallet and creates a smart account (sub-account linked to their main wallet)
-2. User configures policies (selects which vaults, which assets their capital will flow into)
-3. User deposits assets into their smart account
-4. Router allocates capital to the highest-yielding permitted vault
-5. Router continuously monitors yields via the Indexer
-6. When a better opportunity exists, Router rebalances
-7. User withdraws to their main wallet at any time
+2. User selects a chain
+3. User configures policies (selects which vaults, protocols, and assets their capital will flow into)
+4. User deposits assets into their smart account
+5. Router allocates capital to the highest-yielding permitted vault or market
+6. Router continuously monitors yields via the Indexer across all enabled protocols
+7. When a better opportunity exists, Router rebalances
+8. User withdraws to their main wallet at any time
 
 ### What the Router Optimizes
 
 The Router seeks the highest sustainable yield within user-defined constraints. This means:
 
-- Evaluating current APY across all permitted vaults
+- Evaluating current APY across all permitted vaults and markets
+- Comparing yields across protocols and chains
 - Accounting for costs and impacts of moving capital
 - Filtering out unsustainable or artificially inflated yields
 - Respecting liquidity constraints and withdrawal reliability
+
+For risk-adjusted evaluation of yield opportunities, Rosetta includes a built-in risk intelligence layer — see [Circular](/circular).

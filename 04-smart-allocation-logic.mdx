@@ -6,7 +6,7 @@ sidebarTitle: "Smart Allocation Logic"
 
 ## Routing Logic
 
-The Routing Logic determines how capital is allocated across vaults. It answers: given the user's policies and current market conditions, where should funds be?
+The Routing Logic determines how capital is allocated across vaults and lending markets. It answers: given the user's policies and current market conditions, where should funds be?
 
 ### Decision Inputs
 
@@ -15,26 +15,32 @@ The Router evaluates:
 | Input | Source |
 | --- | --- |
 | Current APY per vault | Indexer (block-level) |
+| Current APY per Aave market | Indexer (block-level) |
 | Post-deposit APY | Indexer (impact simulation) |
 | Available liquidity | Indexer |
-| User's enabled vaults | Policies |
+| User's enabled vaults and protocols | Policies |
 | Current allocation | Smart account state |
+| Chain context | Selected chain (HyperEVM or Base) |
 
 ### Signal Generation
 
 Based on these inputs, the Router generates allocation signals:
 
-- **Deposit signal**: Which vault should receive new deposits
-- **Rebalance signal**: Whether current allocation should shift to a different vault
+- **Deposit signal**: Which vault or market should receive new deposits
+- **Rebalance signal**: Whether current allocation should shift to a different vault or protocol
 - **Hold signal**: Current allocation remains optimal
 
 Signals are generated only when improvement exceeds minimum thresholds. The Router does not rebalance for marginal gains.
+
+### Cross-Protocol Evaluation
+
+The Router compares yields across protocol boundaries. An Aave supply market yielding 6% will be preferred over a Morpho vault yielding 5%, assuming both are enabled in user policies. The Router treats all enabled destinations as a single opportunity set.
 
 ### Execution
 
 When a signal is generated:
 
 1. Router validates action against user's policies
-2. Transaction is submitted to user's smart account
-3. Smart account executes on-chain
+2. Transaction is submitted to user's smart account on the appropriate chain
+3. Smart account executes on-chain (Morpho vault deposit or Aave supply)
 4. Rosetta sponsors gas costs
