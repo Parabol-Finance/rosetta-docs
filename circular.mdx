@@ -8,12 +8,6 @@ sidebarTitle: "Circular"
 
 Circular is Rosetta's risk intelligence layer. It provides real-time visibility into lending market risks across the protocols Rosetta routes to, transforming on-chain data into actionable risk intelligence.
 
-Circular is available as:
-
-- **MCP Server**: 26 tools accessible via Claude Desktop and Claude Code
-- **REST API**: HTTP endpoints for programmatic access
-- **Dashboard**: Visual interface at [circular dashboard](https://cairo-gules.vercel.app)
-
 ## Tools
 
 Circular exposes 26 tools organized into three categories.
@@ -74,30 +68,3 @@ Circular uses a deterministic 0–100 risk scoring model:
 
 Utilization above 85% is flagged as elevated risk. Above 93% is flagged as critical (withdrawal risk).
 
-## Supported Protocols
-
-| Protocol | Status |
-| --- | --- |
-| Morpho Blue | Fully integrated |
-| Aave V3 | Partial (markets + reserves) |
-| Euler V2 | Planned |
-
-## Using Circular with Claude
-
-Add Circular as an MCP server in Claude Desktop or Claude Code:
-
-```json
-{
-  "mcpServers": {
-    "circular": {
-      "command": "node",
-      "args": ["./packages/mcp/dist/index.js"],
-      "env": {
-        "CIRCULAR_API_URL": "https://cairo-gules.vercel.app"
-      }
-    }
-  }
-}
-```
-
-Once connected, you can query lending markets, scan wallet risk, simulate scenarios, and generate risk reports through natural language.
