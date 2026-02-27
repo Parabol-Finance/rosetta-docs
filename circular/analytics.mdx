@@ -1,0 +1,113 @@
+---
+title: "Analytics Tools"
+description: "Trend analysis, market comparison, yield ranking, and position simulation"
+sidebarTitle: "Analytics"
+---
+
+## Overview
+
+9 tools for analyzing market trends, comparing opportunities, ranking yields, and simulating positions.
+
+## Comparing
+
+### compare_markets
+
+Side-by-side comparison of 2-5 markets across all metrics.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| marketIds | string[] (required, 2-5) | Market identifiers to compare |
+| metrics | string[] | Specific metrics to compare |
+
+**Returns:** Comparison table with TVL, APY, utilization, risk score, and strategy for each market.
+
+### get_chain_comparison
+
+Compare DeFi activity across chains including TVL, market count, average yields, and liquidation rates.
+
+No required parameters. Optional filters: chain, protocol.
+
+**Returns:** Per-chain breakdown of TVL, market count, average supply APY, and liquidation activity.
+
+## Trends
+
+### get_historical_trends
+
+TVL, utilization, and APY trends over time for a protocol or specific market.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| marketId | string | Specific market (omit for protocol-wide) |
+| range | `24h`, `7d`, `30d`, `90d` | Time range |
+
+**Returns:** Time-series data points for TVL, utilization, and APY over the selected range.
+
+### get_market_history
+
+Historical data for a specific market showing supply, borrow, and APY over time.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| marketId | string (required) | Market identifier |
+| range | `24h`, `7d`, `30d`, `90d` | Time range |
+
+**Returns:** Time-series with supply volume, borrow volume, supply APY, and borrow APY.
+
+## Yield Analysis
+
+### find_yield_opportunities
+
+Rank markets by risk-adjusted yield using a Sharpe-ratio proxy. Filter by minimum APY, risk tier, and strategy.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| minApy | number | Minimum APY as decimal (0.05 = 5%) |
+| maxRiskTier | `safe`, `moderate`, `elevated` | Maximum acceptable risk level |
+| strategy | string | Filter by strategy type |
+
+**Returns:** Markets ranked by risk-adjusted yield with APY, risk tier, strategy label, and Sharpe proxy score.
+
+### analyze_strategy
+
+Deep analysis of a strategy type showing market count, aggregate performance, risk profile, and best opportunities.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| strategy | string (required) | Strategy type (e.g., `recursive`, `lst-delta`, `stable-yield`) |
+
+**Returns:** Strategy overview with total TVL, average APY, risk distribution, and top-performing markets.
+
+### get_strategy_breakdown
+
+Strategy-level exposure breakdown showing TVL, borrow, average APY, and average risk score per strategy type.
+
+No required parameters. Optional filters: chain, protocol.
+
+**Returns:** Per-strategy aggregates showing how capital is distributed across LST-delta, recursive, stable-yield, and other strategies.
+
+## Simulation
+
+### simulate_position
+
+Simulate a leveraged position with entry metrics, health factor evolution, liquidation price, daily carry, and break-even timeline.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| marketId | string (required) | Market to simulate in |
+| collateralUsd | number (required) | Collateral amount in USD |
+| leverage | number (required) | Target leverage (e.g., 3.0) |
+| timeHorizonDays | number | Simulation duration in days |
+
+**Returns:** Position simulation with entry health factor, liquidation price, daily carry (income minus cost), break-even point, and health factor trajectory over time.
+
+## Monitoring
+
+### get_alert_conditions
+
+Check active alert conditions across health factor warnings, utilization spikes, APY changes, and whale movements.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| type | `health`, `utilization`, `apy`, `whale` | Filter by alert category |
+
+**Returns:** Active alerts with severity, affected market or vault, trigger condition, and current value.

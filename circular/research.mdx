@@ -1,0 +1,78 @@
+---
+title: "Research Tools"
+description: "Composite analysis tools that synthesize multiple data sources into comprehensive reports"
+sidebarTitle: "Research"
+---
+
+## Overview
+
+Research tools combine multiple underlying analyses into a single comprehensive output. Instead of calling several individual tools, one research tool synthesizes market data, concentration analysis, stress testing, and risk scoring into an actionable report.
+
+## Market Research
+
+### research_market
+
+Deep research on a single market. Combines market metrics, concentration analysis, comparable markets, yield decomposition, leverage scenarios, and risk alerts into one comprehensive view. Use this instead of calling multiple tools separately when investigating a specific market.
+
+**What it synthesizes:**
+
+- Full market metrics and risk assessment
+- Depositor concentration and whale detection
+- Comparable markets for benchmarking
+- Yield decomposition: base rate vs reward incentives vs risk premium
+- Leverage scenarios at 1x, 2x, and 3x
+- Active risk alerts and flags
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| marketId | string (required) | Market unique identifier |
+| chainId | number | Chain ID for disambiguation |
+
+**Returns:** Comprehensive market report covering all dimensions above, with risk-adjusted yield analysis and position sizing guidance.
+
+## Capital Deployment
+
+### research_deployment
+
+Capital deployment advisor. Given an amount and risk tolerance, recommends a portfolio of lending positions with position sizing, simulated returns, blended risk scores, and alternatives that were considered but filtered out.
+
+**What it synthesizes:**
+
+- Market scanning across all available opportunities
+- Risk-adjusted yield ranking
+- Position sizing relative to market depth
+- Return simulation per position
+- Blended portfolio risk score
+- Filtered alternatives with rejection reasons
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| amountUsd | number (required) | Amount to deploy in USD |
+| riskTolerance | `conservative`, `moderate`, `aggressive` | Risk appetite (default: moderate) |
+| strategy | string | Restrict to a strategy type (e.g., `lst-delta`, `recursive`) |
+| maxPositions | number (1-20) | Maximum positions in portfolio (default: 5) |
+| chainIds | number[] | Filter by chain IDs (e.g., [1, 8453]) |
+
+**Returns:** Recommended portfolio with per-position sizing, expected APY, risk score, and monthly income estimate. Includes filtered-out alternatives with reasons.
+
+## Risk Assessment
+
+### research_risk_assessment
+
+Holistic risk assessment for a market, vault, or wallet. Synthesizes concentration, exposure, liquidation proximity, depeg scenarios, and produces actionable recommendations. Use as a one-stop risk check before entering or monitoring a position.
+
+**What it synthesizes:**
+
+- Concentration and diversification analysis
+- Collateral exposure mapping
+- Liquidation proximity assessment
+- Depeg scenario simulation (if requested)
+- Actionable risk recommendations
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| target | string (required) | Market ID, vault address, or wallet address |
+| targetType | `market`, `vault`, `wallet` (required) | Type of target to assess |
+| depegScenario | number (0-1) | Simulate a depeg event (0.1 = 10% price drop) |
+
+**Returns:** Risk assessment report with risk tier, key risk factors, quantified exposure, and specific recommendations for risk mitigation.

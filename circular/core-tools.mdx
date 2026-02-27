@@ -1,0 +1,113 @@
+---
+title: "Core Tools"
+description: "Foundational data tools for markets, vaults, wallets, and protocol health"
+sidebarTitle: "Core Tools"
+---
+
+## Overview
+
+10 foundational tools for accessing real-time market, vault, wallet, and protocol data across supported chains and protocols.
+
+## Market Data
+
+### get_market_overview
+
+Fetch a summary of lending markets with TVL, APY, utilization, strategy classification, and oracle health. Markets with stale oracles are flagged.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| sortBy | `tvl`, `apy`, `utilization`, `borrow` | Sort order for results |
+| strategy | string | Filter by strategy type (e.g., `lst-delta`, `recursive`) |
+
+**Returns:** List of markets with TVL, supply/borrow APY, utilization rate, strategy label, oracle freshness, and risk flags.
+
+### get_market_detail
+
+Deep dive into a single lending market with full metrics, risk assessment, strategy analysis, and oracle health including provider, feeds, and freshness.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| marketId | string (required) | Market unique identifier |
+
+**Returns:** Complete market profile including TVL, rates, utilization, top positions, risk score, oracle details, and strategy classification.
+
+### search_markets
+
+Search markets by token name, symbol, or strategy type.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| query | string (required) | Search term (token name, symbol, or strategy) |
+
+**Returns:** Matching markets with basic metrics.
+
+## Vault Data
+
+### get_vault_overview
+
+List DeFi vaults with TVL, APY, curator info, and allocation summaries.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| sortBy | `tvl`, `apy`, `deposits` | Sort order for results |
+
+**Returns:** List of vaults with TVL, net APY, curator name, number of allocations, and deposit count.
+
+### get_vault_detail
+
+Full vault analysis with enriched allocations showing per-market risk scores, APY contribution, weighted risk score, and APY breakdown.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| address | string (required) | Vault contract address |
+
+**Returns:** Vault profile with allocation breakdown, per-market metrics, depositor summary, and aggregate risk assessment.
+
+## Wallet Data
+
+### scan_wallet_positions
+
+Scan all DeFi positions for a wallet address across all chains and protocols. Shows health factors, leverage, daily carry, and risk alerts.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| address | string (required) | Wallet address to scan |
+
+**Returns:** All positions with health factor, leverage ratio, collateral/debt values, daily carry, and risk flags per position.
+
+## Protocol Data
+
+### get_risk_dashboard
+
+Protocol-wide risk overview with utilization distribution, health factor distribution, concentration metrics, and liquidation velocity.
+
+No required parameters. Optional filters: protocol, chain.
+
+**Returns:** Aggregate risk metrics including utilization buckets, health factor distribution, concentration warnings, and recent liquidation activity.
+
+### get_protocol_stats
+
+High-level protocol statistics including TVL, total supply/borrow, market count, and average utilization.
+
+No required parameters. Optional filter: protocol.
+
+**Returns:** Protocol-level aggregates for TVL, supply, borrow, market count, and utilization.
+
+### get_liquidation_feed
+
+Recent liquidation events with borrower details, seized and repaid amounts, bad debt, and market context.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| since | ISO date string | Only include events after this date |
+| borrower | string | Filter by borrower address |
+
+**Returns:** List of liquidation events with timestamp, borrower, seized/repaid amounts, bad debt flag, and market identifier.
+
+### get_health_status
+
+API health check showing circuit breaker states, cache status, and last successful fetch timestamps.
+
+No parameters.
+
+**Returns:** System health including data source connectivity, cache freshness, and circuit breaker states.

@@ -1,0 +1,72 @@
+---
+title: "Credit Ratings"
+description: "AAA-D credit ratings for DeFi lending markets and vaults"
+sidebarTitle: "Credit Ratings"
+---
+
+## Overview
+
+Circular includes a multi-dimensional credit rating system that assigns letter grades to individual lending markets and managed vaults. Ratings provide a familiar scale for assessing risk at a glance, similar to traditional fixed-income credit ratings. Each rating is computed from multiple independent risk dimensions, then combined into a single composite grade.
+
+## Grade Scale
+
+| Grade | Meaning |
+| --- | --- |
+| AAA | Highest quality, minimal risk |
+| AA | Very high quality, very low risk |
+| A | High quality, low risk |
+| BBB | Good quality, moderate risk |
+| BB | Speculative, elevated risk |
+| B | Highly speculative, high risk |
+| CCC | Substantial risk |
+| CC | Very high risk |
+| C | Near default |
+| D | Default or non-functional |
+
+<Note>
+Grades can carry +/- modifiers (e.g., AA+, BBB-) for finer differentiation within each band.
+</Note>
+
+## Scoring Dimensions
+
+Ratings are computed across four independent dimensions, each capturing a different aspect of risk.
+
+| Dimension | What It Measures |
+| --- | --- |
+| Market Risk | Utilization stability, APY volatility, liquidity depth, TVL trends |
+| Collateral Quality | Token liquidity and maturity, price volatility characteristics, depeg risk |
+| Oracle Reliability | Price feed provider reputation, data freshness, feed redundancy |
+| Concentration Risk | Depositor distribution, single-entity exposure, withdrawal impact |
+
+**Market Risk** evaluates how stable and predictable a market's behavior is over time. Markets with volatile utilization, erratic APY, or shallow liquidity are scored lower.
+
+**Collateral Quality** assesses the underlying collateral token's maturity, trading liquidity, and historical price stability. Established tokens with deep on-chain liquidity score higher than newer or thinly-traded assets.
+
+**Oracle Reliability** measures the trustworthiness of the price feeds that a market depends on. Markets using well-known oracle providers with fresh, redundant data feeds receive higher scores. Stale or single-source oracles are penalized.
+
+**Concentration Risk** examines how depositor capital is distributed within a market. Markets dominated by a small number of large depositors are more vulnerable to sudden withdrawal shocks and score lower.
+
+## Token Tiers
+
+Collateral tokens are classified into tiers based on market maturity and liquidity depth. This classification feeds into the Collateral Quality dimension.
+
+| Tier | Examples |
+| --- | --- |
+| Blue-chip | ETH, WBTC, USDC, USDT, DAI |
+| Established | wstETH, rETH, cbETH, sDAI |
+| Mid-tier | weETH, USDe, FRAX, crvUSD |
+| Emerging | Chain-native tokens, governance tokens |
+
+## Vault Ratings
+
+Vault ratings aggregate the ratings of underlying markets, weighted by the vault's capital allocation to each market. Vaults with concentrated allocations or significant leverage exposure receive penalties. This means a vault allocated to a single high-rated market may score lower than one diversified across several markets of comparable quality.
+
+## Tools
+
+| Tool | Description |
+| --- | --- |
+| `get_market_rating` | Credit rating for a specific lending market with dimension breakdown |
+| `list_by_rating` | Browse and filter markets by credit rating |
+| `get_rating_methodology` | Reference documentation for the rating framework |
+| `get_vault_rating` | Credit rating for a Morpho vault with underlying market breakdown |
+| `list_vaults_by_rating` | Browse and filter vaults by credit rating |

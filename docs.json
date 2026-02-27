@@ -39,7 +39,15 @@
           },
           {
             "group": "Risk Intelligence",
-            "pages": ["circular"]
+            "pages": [
+              "circular/overview",
+              "circular/credit-ratings",
+              "circular/core-tools",
+              "circular/analytics",
+              "circular/institutional",
+              "circular/research",
+              "circular/risk-scoring"
+            ]
           },
           {
             "group": "Reference",

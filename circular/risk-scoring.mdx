@@ -1,0 +1,50 @@
+---
+title: "Risk Scoring"
+description: "Deterministic risk scoring model and strategy classification"
+sidebarTitle: "Risk Scoring"
+---
+
+## Risk Score
+
+Every lending market receives a deterministic risk score from 0 to 100. The score is computed from observable on-chain metrics and protocol characteristics. Same inputs always produce the same score. Lower scores indicate lower risk; higher scores indicate higher risk.
+
+## Factors
+
+The risk score incorporates multiple factors, each capturing a different dimension of market risk.
+
+| Factor | What It Captures |
+| --- | --- |
+| Protocol maturity | Track record and battle-testing of the lending protocol |
+| TVL depth | Market size and available liquidity |
+| Utilization | Ratio of borrowed to supplied assets — higher utilization means less exit liquidity |
+| Concentration | How concentrated deposits are among a small number of wallets |
+| Collateral type | Inherent risk characteristics of the collateral asset (volatility, liquidity, depeg history) |
+| Chain risk | Security and maturity of the underlying blockchain |
+
+These factors are combined into a single composite score. The relative importance of each factor is calibrated to reflect real-world risk dynamics.
+
+## Utilization Regimes
+
+Utilization is the single most important real-time risk indicator. Markets behave differently at different utilization levels.
+
+| Regime | Utilization | Implication |
+| --- | --- | --- |
+| Healthy | Below 70% | Normal operation. Interest rates follow predictable models. Ample exit liquidity. |
+| Elevated | 70% – 85% | Rates climbing. Borrow demand is strong. Exit liquidity thinning. |
+| Critical | 85% – 93% | Withdrawal risk increasing. Rate spikes likely. Suppliers should monitor closely. |
+| Emergency | Above 93% | Withdrawals may fail or be delayed. Severe rate spikes. Protocol intervention likely. |
+
+## Strategy Classification
+
+Circular classifies lending markets by their yield strategy. Each strategy carries a distinct risk profile.
+
+| Strategy | Description | Risk Profile |
+| --- | --- | --- |
+| stable-yield | Standard lending of stablecoins (USDC, USDT, DAI) | Lowest risk. Returns driven by borrow demand. |
+| lst-delta | Lending against liquid staking tokens (wstETH, rETH, cbETH) | Low-moderate. Risk comes from LST depeg scenarios. |
+| recursive | Looped leverage strategies where collateral and loan are correlated | Moderate-high. Leverage amplifies both returns and liquidation risk. |
+| governance | Lending against governance or utility tokens | Higher risk. Collateral volatility is significant. |
+
+## Relationship to Credit Ratings
+
+Risk scores are one input to the broader credit rating system. Specifically, they feed into the Market Risk dimension of Circular's AAA-D credit ratings. Credit ratings additionally incorporate collateral quality, oracle reliability, and concentration risk for a more complete assessment. See the [Credit Ratings](/circular/credit-ratings) page for details.

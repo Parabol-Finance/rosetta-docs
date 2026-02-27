@@ -1,0 +1,136 @@
+---
+title: "Institutional Tools"
+description: "Concentration analysis, stress testing, whale intelligence, and compliance reporting"
+sidebarTitle: "Institutional"
+---
+
+## Overview
+
+12 tools for institutional-grade risk analysis including concentration monitoring, stress testing, whale tracking, and compliance reporting.
+
+## Concentration Analysis
+
+### analyze_concentration
+
+HHI analysis and whale detection for a market or vault. Returns concentration risk tier and diversification score.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| marketId | string | Market to analyze |
+| vaultAddress | string | Vault to analyze (alternative to marketId) |
+
+**Returns:** HHI score, concentration risk tier, top depositors with share percentages, and diversification score.
+
+### get_vault_concentration
+
+Dedicated concentration analysis for a specific vault with top depositors, risk tier, and diversification score.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| vaultAddress | string (required) | Vault address |
+
+**Returns:** Top depositors, HHI, concentration risk tier, and diversification assessment.
+
+### get_asset_concentration
+
+Asset group concentration analysis across the protocol. Classifies collateral into groups (ETH, BTC, Stablecoins, etc.) and flags concentration when any group exceeds thresholds.
+
+No required parameters. Optional filters: protocol, chain.
+
+**Returns:** TVL per asset group, HHI across groups, and concentration warnings.
+
+## Stress Testing
+
+### simulate_depeg
+
+Model the impact of a collateral depeg event. Estimates liquidations, bad debt, per-market health factor impact, and cascading effects. Supports single-token or asset-group simulation.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| collateral | string | Token symbol to depeg (use this OR assetGroup) |
+| assetGroup | `ETH`, `BTC`, `Stablecoins`, `HYPE` | Asset group to depeg simultaneously |
+| depegPct | number (required, 0-1) | Depeg severity (0.1 = 10% price drop) |
+
+**Returns:** Estimated liquidation volume, bad debt, affected markets with per-market health factor changes, and cascade risk assessment.
+
+### analyze_exposure
+
+Collateral exposure analysis across vaults. Shows total protocol exposure to a specific token and simulates depeg impact.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| collateral | string (required) | Token symbol to analyze |
+
+**Returns:** Total exposure in USD, affected vaults and markets, and estimated impact of various depeg scenarios.
+
+### get_liquidation_risk_map
+
+Map positions by proximity to liquidation. Identifies clusters that would cascade if prices move.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| marketId | string | Filter to specific market |
+| priceDropPct | number (0-1) | Simulate a price drop (0.1 = 10%) |
+
+**Returns:** Position clusters grouped by liquidation proximity, cascade risk assessment, and total value at risk per price level.
+
+## Whale Intelligence
+
+### monitor_whale_activity
+
+Track large position changes including new deposits, withdrawals, and leverage adjustments above a size threshold.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| minUsd | number | Minimum position size in USD (default $1M) |
+| since | ISO date string | Only activity after this date |
+
+**Returns:** Recent whale movements with wallet address, action type, amount, market, and timestamp.
+
+### get_top_wallets
+
+Top wallets by total value across protocols. Ranked by size with per-wallet risk flags, average health factor, and leverage.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| minUsd | number | Minimum total value (default $100K) |
+
+**Returns:** Ranked wallets with total value, position count, average health factor, average leverage, and risk flags.
+
+## Compliance and Reporting
+
+### generate_risk_report
+
+Comprehensive risk report for a wallet, market, or protocol. Suitable for institutional compliance review.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| type | `wallet`, `market`, `protocol` (required) | Report subject type |
+| identifier | string (required) | Address, market ID, or protocol name |
+| format | `summary`, `detailed` | Output verbosity |
+
+**Returns:** Structured risk report with executive summary, detailed metrics, risk factors, and recommendations.
+
+### get_risk_adjusted_yields
+
+Rank all markets by Sharpe-proxy risk-adjusted yield with volatility metrics and stability scores.
+
+No required parameters. Optional filters: protocol, chain.
+
+**Returns:** Markets ranked by risk-adjusted yield with APY, volatility, stability score, and Sharpe proxy.
+
+### analyze_protocol_health
+
+Cross-protocol health comparison covering bad debt ratios, insurance fund adequacy, governance risk, and oracle reliability.
+
+No required parameters.
+
+**Returns:** Per-protocol health assessment with bad debt ratio, insurance coverage, governance risk indicators, and oracle reliability scores.
+
+### get_positions_at_risk
+
+Fetch positions near the liquidation threshold across all markets. Returns positions ordered by health factor, lowest first.
+
+No required parameters. Optional filters: protocol, chain.
+
+**Returns:** Positions sorted by health factor (most at-risk first) with wallet, market, health factor, collateral value, and debt value.
