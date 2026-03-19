@@ -1,0 +1,95 @@
+---
+title: "Error Handling"
+description: "Error codes, response shapes, and troubleshooting guide"
+sidebarTitle: "Errors"
+---
+
+## Error Response Formats
+
+Errors have two shapes depending on the source:
+
+**Auth/middleware errors (401, 403, 429):**
+```json
+{
+  "error": "ERROR_CODE",
+  "message": "Human-readable description"
+}
+```
+
+**Handler errors (400) — when a handler returns `success: false`:**
+```json
+{
+  "error": "error message from handler",
+  "meta": {
+    "latencyMs": 45,
+    "freshness": "live",
+    "source": "morpho"
+  }
+}
+```
+
+## Error Codes
+
+### Authentication (401)
+
+| Code | Description |
+| --- | --- |
+| `MISSING_API_KEY` | No `Authorization: Bearer` header provided |
+| `INVALID_KEY_FORMAT` | Key present but wrong prefix (must start with `circ_live_` or `circ_test_`) |
+| `INVALID_API_KEY` | API key not found or revoked |
+| `UNAUTHORIZED` | No Bearer token provided on a JWT-authenticated route |
+| `INVALID_TOKEN` | JWT is malformed, expired, or signature invalid |
+
+### Authorization (403)
+
+| Code | Description |
+| --- | --- |
+| `ACCOUNT_SUSPENDED` | Account billing is suspended. Contact support to reactivate |
+| `FORBIDDEN` | JWT does not have the required role |
+| `ENDPOINT_NOT_INCLUDED` | Your tier does not include this endpoint category. Response includes `upgrade: true` |
+
+### Rate Limiting (429)
+
+| Code | Extra Fields | Description |
+| --- | --- | --- |
+| `RATE_LIMIT_EXCEEDED` | `retryAfter` (seconds) | Sliding window rate limit hit |
+| `DAILY_QUOTA_EXCEEDED` | `limit`, `used` | Daily request quota exhausted |
+| `MONTHLY_QUOTA_EXCEEDED` | `limit`, `used` | Monthly request quota exhausted |
+
+### Handler Errors (400)
+
+When a handler returns `success: false`, the API responds with the error message and metadata. These are domain-specific errors like invalid parameters or missing data.
+
+### Circuit Breaker (503)
+
+When an upstream dependency is unavailable:
+
+```json
+{
+  "error": "Service temporarily unavailable",
+  "retryAfterMs": 30000
+}
+```
+
+The circuit breaker opens after repeated failures to an upstream provider (Morpho, Aave). It auto-closes after the `retryAfterMs` window.
+
+### Internal Errors (500)
+
+Unhandled exceptions return a generic error. Stack traces are included only in non-production environments.
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+### Not Implemented (501)
+
+When a requested feature is not yet available:
+
+```json
+{
+  "error": "Not yet implemented",
+  "detail": "SSE transport is not yet implemented"
+}
+```

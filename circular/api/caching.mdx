@@ -1,0 +1,68 @@
+---
+title: "Caching"
+description: "Cache-Control headers, CDN behavior, and data freshness"
+sidebarTitle: "Caching"
+---
+
+## Cache Tiers
+
+The API sets `Cache-Control` headers based on data volatility. Three tiers:
+
+### No-Store (Real-Time)
+
+User-specific or frequently changing data. No caching at any layer.
+
+```
+Cache-Control: no-store
+```
+
+**Endpoints:**
+- `/health`
+- `/positions/all`, `/positions/{address}`, `/positions/{address}/loops`, `/positions/{address}/vaults`
+- `/liquidations/user/{address}`
+- `/vaults/{address}`, `/vaults/{address}/depositors`
+- `/markets/{marketId}`, `/markets/{marketId}/history`, `/markets/{marketId}/positions`
+- `/research/market/{marketId}`, `/research/risk`
+
+### Standard (Aggregate Data)
+
+Protocol-wide aggregates that update every few seconds.
+
+```
+Cache-Control: public, max-age=10, s-maxage=30, stale-while-revalidate=60
+Vary: Accept-Encoding
+```
+
+**Endpoints:**
+- `/markets`, `/vaults`, `/stats`, `/trends`, `/yields`, `/liquidations`
+- `/alerts`, `/whales`, `/wallets/top`
+- `/ratings`, `/ratings/vaults`
+- `/risk/dashboard`, `/risk/protocol-health`, `/risk/positions-at-risk`
+- `/strategies/breakdown`, `/chains/compare`
+
+### Short (Parameterized/Derived)
+
+Computed results that depend on query parameters.
+
+```
+Cache-Control: public, max-age=5, s-maxage=15, stale-while-revalidate=30
+Vary: Accept-Encoding
+```
+
+**Endpoints:**
+- `/markets/search`, `/markets/compare`, `/vaults/concentration`
+- `/risk/concentration`, `/risk/exposure/{collateral}`, `/risk/yields`, `/risk/report`, `/risk/liquidation-map`
+- `/strategy/{strategy}`, `/simulate/position`
+- `/research/deploy`, `/research/borrow-markets`, `/research/borrow-strategy`
+- `/ratings/market/{marketId}`, `/ratings/vault/{address}`, `/ratings/methodology`
+- `/agent/policy/defaults`
+
+## Freshness Indicator
+
+The `meta.freshness` field in responses tells you how fresh the data is:
+
+| Value | Meaning |
+| --- | --- |
+| `live` | Fetched from protocol in real-time |
+| `cached` | Served from server-side cache |
+| `snapshot` | From a periodic snapshot (Supabase time-series) |

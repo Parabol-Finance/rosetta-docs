@@ -1,0 +1,2132 @@
+openapi: "3.0.3"
+info:
+  title: Circular API
+  description: DeFi risk intelligence API by Rosetta — markets, vaults, positions, risk analysis, credit ratings, and portfolio management across Morpho Blue, Aave V3, and other lending protocols.
+  version: "1.0.0"
+  contact:
+    name: Rosetta
+    url: https://rosetta.sh
+
+servers:
+  - url: https://api.circular.rosetta.sh/api/v1
+    description: Production
+
+security:
+  - BearerApiKey: []
+
+tags:
+  - name: Markets
+    description: Lending market data — overview, search, compare, history, positions
+  - name: Tokens
+    description: Token metadata and oracle feeds
+  - name: Vaults
+    description: Vault data — overview, concentration, depositors
+  - name: Positions
+    description: Position scanning — wallet positions, loops, vault positions
+  - name: Risk
+    description: Risk analysis — dashboard, concentration, depeg simulation, protocol health
+  - name: Liquidations
+    description: Liquidation feed and history
+  - name: Analytics
+    description: Strategy breakdown, trends, yield opportunities, whale monitoring
+  - name: Research
+    description: Deep market research, deployment analysis, borrow strategy
+  - name: Ratings
+    description: Credit ratings — methodology, market ratings, vault ratings
+  - name: Portfolios
+    description: Portfolio management — overview, risk, yield, alerts, liquidity
+  - name: Health
+    description: API health check
+  - name: Agent
+    description: Agent risk API — risk checks and policy defaults
+  - name: Client
+    description: Client self-service — profile, API keys, usage, quota dashboard
+
+components:
+  securitySchemes:
+    BearerApiKey:
+      type: http
+      scheme: bearer
+      description: API key in format circ_live_* or circ_test_*
+    ClientJWT:
+      type: http
+      scheme: bearer
+      description: Supabase JWT with client_id claim
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 50
+      description: Maximum number of results to return
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        default: 0
+      description: Number of results to skip
+    ChainIds:
+      name: chainIds
+      in: query
+      schema:
+        type: string
+      description: Comma-separated chain IDs to filter by
+    MarketId:
+      name: marketId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique market identifier (protocol-chainId-identifier)
+    WalletAddress:
+      name: address
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Ethereum wallet address (0x...)
+    VaultAddress:
+      name: address
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Vault contract address (0x...)
+    PortfolioId:
+      name: portfolioId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Portfolio identifier
+
+  schemas:
+    Meta:
+      type: object
+      properties:
+        latencyMs:
+          type: number
+          description: Server-side processing time in milliseconds
+        freshness:
+          type: string
+          description: Data freshness indicator (live, cached, snapshot)
+        source:
+          type: string
+          description: Which protocol(s) provided data
+
+    SuccessResponse:
+      type: object
+      properties:
+        data: {}
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    HandlerErrorResponse:
+      type: object
+      description: Returned when a handler returns success false (HTTP 400)
+      properties:
+        error:
+          type: string
+          description: Error message from the handler
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    AuthErrorResponse:
+      type: object
+      description: "Returned for auth failures. 401 codes: MISSING_API_KEY, INVALID_KEY_FORMAT, INVALID_API_KEY, UNAUTHORIZED, INVALID_TOKEN. 403 codes: FORBIDDEN, ENDPOINT_NOT_INCLUDED, ACCOUNT_SUSPENDED."
+      properties:
+        error:
+          type: string
+          description: Error code (e.g. MISSING_API_KEY)
+        message:
+          type: string
+          description: Human-readable description
+
+    RateLimitError:
+      type: object
+      properties:
+        error:
+          type: string
+          enum: [RATE_LIMIT_EXCEEDED]
+        message:
+          type: string
+        retryAfter:
+          type: integer
+          description: Seconds to wait before retrying
+
+    QuotaError:
+      type: object
+      properties:
+        error:
+          type: string
+          enum: [DAILY_QUOTA_EXCEEDED, MONTHLY_QUOTA_EXCEEDED]
+        message:
+          type: string
+        limit:
+          type: integer
+        used:
+          type: integer
+
+    StrategyInfo:
+      type: object
+      properties:
+        type:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+        color:
+          type: string
+        icon:
+          type: string
+
+    OracleFeed:
+      type: object
+      properties:
+        address:
+          type: string
+        description:
+          type: string
+        pair:
+          type: string
+
+    OracleInfo:
+      type: object
+      nullable: true
+      properties:
+        address:
+          type: string
+        type:
+          type: string
+          enum: [ChainlinkOracle, ChainlinkOracleV2, MorphoPythOracle, ChronicleOracle, RedstoneOracle, Api3Oracle, UniswapV3Twap, PendlePtOracle, Custom]
+        provider:
+          type: string
+          enum: [Chainlink, Pyth, Chronicle, Redstone, API3, Uniswap, Pendle, Unknown]
+        feeds:
+          type: array
+          items:
+            $ref: '#/components/schemas/OracleFeed'
+        isComposite:
+          type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    OracleHealth:
+      type: object
+      nullable: true
+      properties:
+        lastUpdateTimestamp:
+          type: integer
+          description: Unix seconds
+        secondsSinceUpdate:
+          type: integer
+        expectedHeartbeatSeconds:
+          type: integer
+        isStale:
+          type: boolean
+        stalenessRatio:
+          type: number
+
+    Market:
+      type: object
+      properties:
+        uniqueKey:
+          type: string
+          description: Unique identifier protocol-chainId-identifier
+        protocol:
+          type: string
+          enum: [morpho, aave, euler, fluid, spark, kamino]
+        chainId:
+          type: integer
+        label:
+          type: string
+          nullable: true
+        collateral:
+          type: string
+          description: Collateral token symbol
+        loan:
+          type: string
+          description: Loan token symbol
+        collateralAddress:
+          type: string
+        loanAddress:
+          type: string
+        collateralPrice:
+          type: number
+          description: USD price
+        loanPrice:
+          type: number
+          description: USD price
+        supply:
+          type: number
+          description: Total supplied in USD
+        borrow:
+          type: number
+          description: Total borrowed in USD
+        available:
+          type: number
+          description: supply minus borrow in USD
+        utilization:
+          type: number
+          description: 0-1 ratio (borrow/supply)
+        supplyApy:
+          type: number
+          description: Decimal APY (0.042 = 4.2%)
+        borrowApy:
+          type: number
+          description: Decimal APY
+        supplyRewardsApy:
+          type: number
+          description: Additional rewards APY (decimal)
+        borrowRewardsApy:
+          type: number
+          description: Additional rewards APY (decimal)
+        rewardTokens:
+          type: array
+          items:
+            type: string
+        lltv:
+          type: number
+          description: Liquidation LTV, normalized 0-1
+        maxLeverage:
+          type: number
+          description: 1 / (1 - lltv)
+        strategyType:
+          type: string
+        strategyInfo:
+          $ref: '#/components/schemas/StrategyInfo'
+        vaultSymbol:
+          type: string
+          nullable: true
+          description: Euler vault token symbol (e.g. eUSDC-80)
+        vaultAddress:
+          type: string
+          nullable: true
+          description: Full vault contract address (Euler)
+        governor:
+          type: string
+          nullable: true
+          description: Governor/curator name (Euler)
+        oracle:
+          $ref: '#/components/schemas/OracleInfo'
+        oracleHealth:
+          $ref: '#/components/schemas/OracleHealth'
+
+    VaultAllocation:
+      type: object
+      properties:
+        marketId:
+          type: string
+        collateral:
+          type: string
+        share:
+          type: number
+          description: 0-1
+        apy:
+          type: number
+        supplyUsd:
+          type: number
+
+    Vault:
+      type: object
+      properties:
+        address:
+          type: string
+        name:
+          type: string
+        curator:
+          type: string
+        chainId:
+          type: integer
+        asset:
+          type: string
+        tvl:
+          type: number
+          description: USD, supply-side only
+        apy:
+          type: object
+          properties:
+            base:
+              type: number
+            rewards:
+              type: number
+            total:
+              type: number
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/VaultAllocation'
+        leverageExposure:
+          type: number
+          description: 0-1
+        topDepositors:
+          type: integer
+
+    Position:
+      type: object
+      properties:
+        protocol:
+          type: string
+        chainId:
+          type: integer
+        user:
+          type: object
+          properties:
+            address:
+              type: string
+        healthFactor:
+          type: number
+          nullable: true
+          description: ">= 1 is safe, < 1 is liquidatable"
+        state:
+          type: object
+          properties:
+            collateralUsd:
+              type: number
+            borrowAssetsUsd:
+              type: number
+            supplyAssetsUsd:
+              type: number
+        market:
+          type: object
+          properties:
+            uniqueKey:
+              type: string
+            collateralAsset:
+              type: object
+              properties:
+                symbol:
+                  type: string
+            loanAsset:
+              type: object
+              properties:
+                symbol:
+                  type: string
+            lltv:
+              type: number
+        leverage:
+          type: number
+        distanceToLiq:
+          type: number
+          nullable: true
+
+    Liquidation:
+      type: object
+      properties:
+        hash:
+          type: string
+        blockNumber:
+          type: integer
+        timestamp:
+          type: integer
+        chainId:
+          type: integer
+        protocol:
+          type: string
+        borrower:
+          type: string
+        liquidator:
+          type: string
+        collateralAsset:
+          type: string
+        loanAsset:
+          type: string
+        seizedUsd:
+          type: number
+          description: Always >= repaidUsd
+        repaidUsd:
+          type: number
+        badDebtUsd:
+          type: number
+          description: Always >= 0
+        marketKey:
+          type: string
+
+    ProtocolStats:
+      type: object
+      properties:
+        protocol:
+          type: string
+        totalSupplyUsd:
+          type: number
+        totalBorrowUsd:
+          type: number
+        tvl:
+          type: number
+          description: Supply-side only, no borrow
+        marketCount:
+          type: integer
+        vaultCount:
+          type: integer
+        avgUtilization:
+          type: number
+          description: totalBorrow / totalSupply
+        chains:
+          type: array
+          items:
+            type: integer
+
+    TokenMetadata:
+      type: object
+      properties:
+        token:
+          type: string
+        contractAddress:
+          type: string
+        chainId:
+          type: integer
+        displayDecimals:
+          type: integer
+        oracleFeeds:
+          type: array
+          items:
+            type: object
+            properties:
+              provider:
+                type: string
+              feedAddress:
+                type: string
+              pair:
+                type: string
+              network:
+                type: string
+        vaults:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              address:
+                type: string
+
+    ConcentrationRisk:
+      type: object
+      properties:
+        hhi:
+          type: number
+          description: Herfindahl-Hirschman Index 0-10000
+        top5Share:
+          type: number
+        top10Share:
+          type: number
+        whaleRisk:
+          type: string
+          enum: [low, medium, high]
+        diversificationScore:
+          type: number
+          description: 0-1, inverse of HHI
+        largestPosition:
+          type: object
+          properties:
+            address:
+              type: string
+            share:
+              type: number
+            amountUsd:
+              type: number
+
+    RiskAdjustedYield:
+      type: object
+      properties:
+        marketId:
+          type: string
+        collateral:
+          type: string
+        loan:
+          type: string
+        totalApy:
+          type: number
+        sharpeProxy:
+          type: number
+        riskScore:
+          type: number
+          description: 0-100
+        riskDecomposition:
+          type: object
+          properties:
+            utilization:
+              type: number
+            concentration:
+              type: number
+            leverage:
+              type: number
+            volatility:
+              type: number
+            oracle:
+              type: number
+        volatility:
+          type: object
+          properties:
+            day30:
+              type: number
+            day90:
+              type: number
+        maxDrawdown:
+          type: number
+        stabilityPercentile:
+          type: number
+
+    ExposureAnalysis:
+      type: object
+      properties:
+        collateral:
+          type: string
+        totalExposureUsd:
+          type: number
+        vaults:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              exposureUsd:
+                type: number
+              share:
+                type: number
+        depegImpact:
+          type: object
+          properties:
+            pct5:
+              type: object
+              properties:
+                lossUsd:
+                  type: number
+                liquidationsTriggered:
+                  type: integer
+            pct10:
+              type: object
+              properties:
+                lossUsd:
+                  type: number
+                liquidationsTriggered:
+                  type: integer
+            pct25:
+              type: object
+              properties:
+                lossUsd:
+                  type: number
+                liquidationsTriggered:
+                  type: integer
+
+    RiskPolicy:
+      type: object
+      properties:
+        minRating:
+          type: string
+          default: BBB
+        maxUtilization:
+          type: number
+          default: 0.85
+        maxConcentrationPct:
+          type: number
+          default: 0.05
+        requireFreshOracle:
+          type: boolean
+          default: true
+        maxLeverage:
+          type: number
+          default: 3.0
+
+    RiskCheckRequest:
+      type: object
+      required: [action, marketId, amountUsd]
+      properties:
+        action:
+          type: string
+          enum: [deposit, borrow, withdraw, swap]
+        marketId:
+          type: string
+        amountUsd:
+          type: number
+        walletAddress:
+          type: string
+        policy:
+          $ref: '#/components/schemas/RiskPolicy'
+
+    RiskReason:
+      type: object
+      properties:
+        check:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        message:
+          type: string
+        value: {}
+        threshold: {}
+
+    RiskAlternative:
+      type: object
+      properties:
+        marketId:
+          type: string
+        name:
+          type: string
+        rating:
+          type: string
+        riskScore:
+          type: number
+        supplyApy:
+          type: number
+        borrowApy:
+          type: number
+        tvl:
+          type: number
+        utilization:
+          type: number
+        chainId:
+          type: integer
+        protocol:
+          type: string
+        reason:
+          type: string
+
+    RiskCheckResult:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: [ALLOW, DENY, WARN]
+        reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskReason'
+        market:
+          type: object
+          properties:
+            name:
+              type: string
+            rating:
+              type: string
+            riskScore:
+              type: number
+            utilization:
+              type: number
+            tvl:
+              type: number
+            supplyApy:
+              type: number
+            borrowApy:
+              type: number
+        position:
+          type: object
+          nullable: true
+          properties:
+            healthFactor:
+              type: number
+              nullable: true
+            currentLeverage:
+              type: number
+            distanceToLiq:
+              type: number
+              nullable: true
+        alternative:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/RiskAlternative'
+        alternatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskAlternative'
+        meta:
+          type: object
+          properties:
+            latencyMs:
+              type: number
+            policyApplied:
+              $ref: '#/components/schemas/RiskPolicy'
+            checksRun:
+              type: array
+              items:
+                type: string
+            timestamp:
+              type: string
+              format: date-time
+
+    ClientProfile:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        tier:
+          type: string
+        billingStatus:
+          type: string
+          enum: [active, suspended, cancelled]
+
+    ApiKeyInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key_prefix:
+          type: string
+          description: "e.g. circ_live_xxxx"
+        status:
+          type: string
+          enum: [active, revoked]
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ApiKeyCreatedResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            key_prefix:
+              type: string
+            rawKey:
+              type: string
+              description: Full API key. Shown ONCE only.
+            created_at:
+              type: string
+              format: date-time
+        warning:
+          type: string
+          description: "Always: Save this key now. It will not be shown again."
+
+    UsageSummary:
+      type: object
+      properties:
+        day:
+          type: string
+          format: date
+        endpoint:
+          type: string
+        total_requests:
+          type: integer
+        error_count:
+          type: integer
+
+    QuotaDashboard:
+      type: object
+      properties:
+        tier:
+          type: string
+        dailyQuota:
+          type: integer
+          nullable: true
+        dailyUsed:
+          type: integer
+        monthlyQuota:
+          type: integer
+          nullable: true
+        monthlyUsed:
+          type: integer
+
+paths:
+  # ─── Markets ───────────────────────────────────────────────────
+  /markets:
+    get:
+      tags: [Markets]
+      summary: List lending markets
+      description: Fetch a summary of lending markets with TVL, APY, utilization, strategy classification, and oracle health.
+      operationId: listMarkets
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/ChainIds'
+        - name: assets
+          in: query
+          schema:
+            type: string
+          description: Filter by asset symbol
+      responses:
+        '200':
+          description: List of markets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Market'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '400':
+          description: Handler error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerErrorResponse'
+        '401':
+          description: Authentication error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '429':
+          description: Rate limit or quota exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+
+  /markets/search:
+    get:
+      tags: [Markets]
+      summary: Search markets
+      description: Search lending markets by keyword (asset name, symbol, or market label).
+      operationId: searchMarkets
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Matching markets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Market'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /markets/compare:
+    get:
+      tags: [Markets]
+      summary: Compare markets side by side
+      description: Compare multiple markets with detailed metrics for side-by-side analysis.
+      operationId: compareMarkets
+      parameters:
+        - name: marketIds
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          description: Market IDs to compare
+      responses:
+        '200':
+          description: Comparison data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /markets/{marketId}:
+    get:
+      tags: [Markets]
+      summary: Get market details
+      description: Fetch detailed information for a specific lending market including oracle data, strategy info, and risk metrics.
+      operationId: getMarket
+      parameters:
+        - $ref: '#/components/parameters/MarketId'
+      responses:
+        '200':
+          description: Market details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Market'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /markets/{marketId}/history:
+    get:
+      tags: [Markets]
+      summary: Get market history
+      description: Fetch historical data for a market including TVL, APY, and utilization over time.
+      operationId: getMarketHistory
+      parameters:
+        - $ref: '#/components/parameters/MarketId'
+        - name: days
+          in: query
+          schema:
+            type: integer
+          description: Number of days of history
+      responses:
+        '200':
+          description: Historical data points
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /markets/{marketId}/positions:
+    get:
+      tags: [Markets]
+      summary: Get positions in a market
+      description: List all positions in a specific lending market.
+      operationId: getMarketPositions
+      parameters:
+        - $ref: '#/components/parameters/MarketId'
+      responses:
+        '200':
+          description: List of positions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Position'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  # ─── Tokens ────────────────────────────────────────────────────
+  /tokens/lookup:
+    get:
+      tags: [Tokens]
+      summary: Look up token metadata
+      description: Get metadata for a token including oracle feeds, vault associations, and display configuration.
+      operationId: tokenLookup
+      parameters:
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Token contract address
+        - name: chainId
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Chain ID
+      responses:
+        '200':
+          description: Token metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TokenMetadata'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  # ─── Vaults ────────────────────────────────────────────────────
+  /vaults:
+    get:
+      tags: [Vaults]
+      summary: List vaults
+      description: Fetch a summary of vaults with TVL, APY, allocations, and curator information.
+      operationId: listVaults
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: List of vaults
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Vault'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '400':
+          description: Handler error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerErrorResponse'
+
+  /vaults/concentration:
+    get:
+      tags: [Vaults]
+      summary: Get vault concentration analysis
+      description: Analyze concentration risk across vault depositors.
+      operationId: vaultConcentration
+      responses:
+        '200':
+          description: Concentration analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /vaults/{address}:
+    get:
+      tags: [Vaults]
+      summary: Get vault details
+      description: Fetch detailed information for a specific vault including allocations, APY breakdown, and depositor data.
+      operationId: getVault
+      parameters:
+        - $ref: '#/components/parameters/VaultAddress'
+      responses:
+        '200':
+          description: Vault details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Vault'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /vaults/{address}/depositors:
+    get:
+      tags: [Vaults]
+      summary: Get vault depositors
+      description: List depositors in a vault with their share and USD value.
+      operationId: vaultDepositors
+      parameters:
+        - $ref: '#/components/parameters/VaultAddress'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: List of depositors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ─── Positions ─────────────────────────────────────────────────
+  /positions/all:
+    get:
+      tags: [Positions]
+      summary: List all positions
+      description: List all tracked positions across all protocols and markets.
+      operationId: allPositions
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: List of positions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Position'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /positions/{address}:
+    get:
+      tags: [Positions]
+      summary: Scan wallet positions
+      description: Scan a wallet address for all lending positions across supported protocols and chains.
+      operationId: scanWallet
+      parameters:
+        - $ref: '#/components/parameters/WalletAddress'
+        - $ref: '#/components/parameters/ChainIds'
+      responses:
+        '200':
+          description: Wallet positions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Position'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '400':
+          description: Handler error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerErrorResponse'
+
+  /positions/{address}/loops:
+    get:
+      tags: [Positions]
+      summary: Detect leveraged loops
+      description: Detect recursive/leveraged loop positions for a wallet (same-asset supply and borrow in the same market).
+      operationId: detectLoops
+      parameters:
+        - $ref: '#/components/parameters/WalletAddress'
+      responses:
+        '200':
+          description: Detected loop positions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /positions/{address}/vaults:
+    get:
+      tags: [Positions]
+      summary: Get wallet vault positions
+      description: Get vault deposit positions for a wallet address.
+      operationId: walletVaultPositions
+      parameters:
+        - $ref: '#/components/parameters/WalletAddress'
+      responses:
+        '200':
+          description: Vault positions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ─── Risk ──────────────────────────────────────────────────────
+  /risk/dashboard:
+    get:
+      tags: [Risk]
+      summary: Get risk dashboard overview
+      description: Comprehensive risk dashboard with protocol-wide risk metrics, concentration analysis, and alert summary.
+      operationId: riskDashboard
+      responses:
+        '200':
+          description: Risk dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Handler error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerErrorResponse'
+
+  /risk/asset-concentration:
+    get:
+      tags: [Risk]
+      summary: Get asset concentration metrics
+      description: Analyze asset concentration across the protocol including HHI, top holders, and diversification scores.
+      operationId: assetConcentration
+      responses:
+        '200':
+          description: Asset concentration data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /risk/concentration:
+    get:
+      tags: [Risk]
+      summary: Analyze concentration risk
+      description: Detailed concentration risk analysis with optional asset filter.
+      operationId: analyzeConcentration
+      parameters:
+        - name: assets
+          in: query
+          schema:
+            type: string
+          description: Filter by asset symbol
+      responses:
+        '200':
+          description: Concentration analysis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ConcentrationRisk'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /risk/exposure/{collateral}:
+    get:
+      tags: [Risk]
+      summary: Analyze collateral exposure
+      description: Analyze exposure to a specific collateral asset including vault distribution and depeg impact simulation.
+      operationId: analyzeExposure
+      parameters:
+        - name: collateral
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Collateral asset symbol
+      responses:
+        '200':
+          description: Exposure analysis
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ExposureAnalysis'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /risk/depeg/simulate:
+    get:
+      tags: [Risk]
+      summary: Simulate depeg scenario
+      description: Simulate the impact of an asset depeg on positions and liquidations.
+      operationId: simulateDepeg
+      parameters:
+        - name: asset
+          in: query
+          schema:
+            type: string
+          description: Asset to simulate depeg for
+        - name: percentChange
+          in: query
+          schema:
+            type: number
+          description: Price change percentage (negative for depeg)
+      responses:
+        '200':
+          description: Simulation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /risk/yields:
+    get:
+      tags: [Risk]
+      summary: Get risk-adjusted yields
+      description: Compare yields across markets normalized for risk using Sharpe proxy, risk decomposition, and stability metrics.
+      operationId: riskAdjustedYields
+      responses:
+        '200':
+          description: Risk-adjusted yield data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RiskAdjustedYield'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  /risk/report:
+    get:
+      tags: [Risk]
+      summary: Generate risk report
+      description: Generate a comprehensive risk report with configurable scope.
+      operationId: riskReport
+      parameters:
+        - name: scope
+          in: query
+          schema:
+            type: string
+          description: Report scope
+      responses:
+        '200':
+          description: Risk report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /risk/liquidation-map:
+    get:
+      tags: [Risk]
+      summary: Get liquidation risk map
+      description: Map of liquidation risk across price levels and markets.
+      operationId: liquidationMap
+      responses:
+        '200':
+          description: Liquidation risk map
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /risk/protocol-health:
+    get:
+      tags: [Risk]
+      summary: Analyze protocol health
+      description: Comprehensive protocol health analysis including bad debt, utilization trends, and systemic risk indicators.
+      operationId: protocolHealth
+      responses:
+        '200':
+          description: Protocol health data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /risk/positions-at-risk:
+    get:
+      tags: [Risk]
+      summary: Get positions at risk
+      description: List positions that are approaching liquidation based on health factor threshold.
+      operationId: positionsAtRisk
+      parameters:
+        - name: threshold
+          in: query
+          schema:
+            type: number
+          description: Health factor threshold (positions below this are at risk)
+      responses:
+        '200':
+          description: At-risk positions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Position'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  # ─── Liquidations ──────────────────────────────────────────────
+  /liquidations:
+    get:
+      tags: [Liquidations]
+      summary: Get liquidation feed
+      description: Fetch recent liquidation events across all markets.
+      operationId: liquidationFeed
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Liquidation events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Liquidation'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '400':
+          description: Handler error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerErrorResponse'
+
+  /liquidations/user/{address}:
+    get:
+      tags: [Liquidations]
+      summary: Get user liquidation history
+      description: Fetch liquidation history for a specific wallet address.
+      operationId: userLiquidations
+      parameters:
+        - $ref: '#/components/parameters/WalletAddress'
+      responses:
+        '200':
+          description: User liquidation history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Liquidation'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  # ─── Analytics ─────────────────────────────────────────────────
+  /strategies/breakdown:
+    get:
+      tags: [Analytics]
+      summary: Get strategy breakdown
+      description: Breakdown of market strategies (LST delta, recursive, stablecoin, etc.) with TVL and count.
+      operationId: strategyBreakdown
+      responses:
+        '200':
+          description: Strategy breakdown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /stats:
+    get:
+      tags: [Analytics]
+      summary: Get protocol statistics
+      description: Aggregate protocol statistics including total supply, borrow, TVL, and market counts.
+      operationId: protocolStats
+      responses:
+        '200':
+          description: Protocol statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ProtocolStats'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '400':
+          description: Handler error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerErrorResponse'
+
+  /trends:
+    get:
+      tags: [Analytics]
+      summary: Get historical trends
+      description: Historical trends for TVL, supply, borrow, and utilization over time.
+      operationId: historicalTrends
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+          description: Number of days of history
+      responses:
+        '200':
+          description: Trend data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /yields:
+    get:
+      tags: [Analytics]
+      summary: Find yield opportunities
+      description: Find the best yield opportunities across markets and vaults, sorted by total APY.
+      operationId: yieldOpportunities
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - name: minApy
+          in: query
+          schema:
+            type: number
+          description: Minimum APY filter (decimal, e.g. 0.05 for 5%)
+      responses:
+        '200':
+          description: Yield opportunities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /strategy/{strategy}:
+    get:
+      tags: [Analytics]
+      summary: Analyze a strategy
+      description: Detailed analysis of a specific strategy type (e.g. lst-delta, recursive, stablecoin).
+      operationId: analyzeStrategy
+      parameters:
+        - name: strategy
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Strategy type identifier
+      responses:
+        '200':
+          description: Strategy analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /chains/compare:
+    get:
+      tags: [Analytics]
+      summary: Compare chains
+      description: Compare DeFi metrics across supported chains.
+      operationId: chainComparison
+      responses:
+        '200':
+          description: Chain comparison
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /simulate/position:
+    get:
+      tags: [Analytics]
+      summary: Simulate position scenario
+      description: Simulate a position under different market conditions.
+      operationId: simulatePosition
+      parameters:
+        - name: position
+          in: query
+          schema:
+            type: string
+          description: Position parameters
+        - name: scenario
+          in: query
+          schema:
+            type: string
+          description: Scenario parameters
+      responses:
+        '200':
+          description: Simulation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /alerts:
+    get:
+      tags: [Analytics]
+      summary: Get alert conditions
+      description: Get current alert conditions across markets and positions.
+      operationId: alertConditions
+      responses:
+        '200':
+          description: Alert conditions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /wallets/top:
+    get:
+      tags: [Analytics]
+      summary: Get top wallets
+      description: List top wallets by various metrics (TVL, positions, activity).
+      operationId: topWallets
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - name: metric
+          in: query
+          schema:
+            type: string
+          description: Metric to rank by
+      responses:
+        '200':
+          description: Top wallets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /whales:
+    get:
+      tags: [Analytics]
+      summary: Monitor whale activity
+      description: Monitor large position changes and whale wallet activity.
+      operationId: whaleActivity
+      parameters:
+        - name: threshold
+          in: query
+          schema:
+            type: number
+          description: Minimum USD threshold for whale detection
+      responses:
+        '200':
+          description: Whale activity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ─── Research ──────────────────────────────────────────────────
+  /research/market/{marketId}:
+    get:
+      tags: [Research]
+      summary: Deep market research
+      description: Comprehensive research report for a specific market including risk analysis, competitive positioning, and recommendations.
+      operationId: researchMarket
+      parameters:
+        - $ref: '#/components/parameters/MarketId'
+      responses:
+        '200':
+          description: Market research report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Handler error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerErrorResponse'
+
+  /research/deploy:
+    get:
+      tags: [Research]
+      summary: Research deployment opportunities
+      description: Analyze optimal deployment opportunities across markets and vaults.
+      operationId: researchDeploy
+      responses:
+        '200':
+          description: Deployment research
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /research/risk:
+    get:
+      tags: [Research]
+      summary: Risk assessment research
+      description: Comprehensive risk assessment across the protocol ecosystem.
+      operationId: researchRisk
+      responses:
+        '200':
+          description: Risk assessment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /research/borrow-markets:
+    get:
+      tags: [Research]
+      summary: Find borrow markets
+      description: Find the best markets for borrowing based on rates, liquidity, and risk.
+      operationId: findBorrowMarkets
+      responses:
+        '200':
+          description: Borrow market analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /research/borrow-strategy:
+    get:
+      tags: [Research]
+      summary: Research borrow strategy
+      description: Analyze and recommend optimal borrowing strategies.
+      operationId: researchBorrowStrategy
+      responses:
+        '200':
+          description: Borrow strategy research
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ─── Ratings ───────────────────────────────────────────────────
+  /ratings/methodology:
+    get:
+      tags: [Ratings]
+      summary: Get rating methodology
+      description: Detailed explanation of the credit rating methodology including scoring dimensions and grade definitions.
+      operationId: ratingMethodology
+      responses:
+        '200':
+          description: Rating methodology
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /ratings/market/{marketId}:
+    get:
+      tags: [Ratings]
+      summary: Get market credit rating
+      description: Get the credit rating for a specific market with score breakdown.
+      operationId: marketRating
+      parameters:
+        - $ref: '#/components/parameters/MarketId'
+      responses:
+        '200':
+          description: Market rating
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Handler error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerErrorResponse'
+
+  /ratings/vaults:
+    get:
+      tags: [Ratings]
+      summary: List vaults by rating
+      description: List all vaults sorted by their credit rating.
+      operationId: vaultsByRating
+      responses:
+        '200':
+          description: Rated vaults
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /ratings/vault/{address}:
+    get:
+      tags: [Ratings]
+      summary: Get vault credit rating
+      description: Get the credit rating for a specific vault with score breakdown.
+      operationId: vaultRating
+      parameters:
+        - $ref: '#/components/parameters/VaultAddress'
+      responses:
+        '200':
+          description: Vault rating
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /ratings:
+    get:
+      tags: [Ratings]
+      summary: List all ratings
+      description: List all market and vault ratings.
+      operationId: listRatings
+      responses:
+        '200':
+          description: All ratings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ─── Portfolios ────────────────────────────────────────────────
+  /portfolios:
+    get:
+      tags: [Portfolios]
+      summary: List portfolios
+      description: List all tracked portfolios.
+      operationId: listPortfolios
+      responses:
+        '200':
+          description: List of portfolios
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /portfolios/{portfolioId}:
+    get:
+      tags: [Portfolios]
+      summary: Get portfolio overview
+      description: Get a comprehensive overview of a portfolio including positions, value, and performance.
+      operationId: portfolioOverview
+      parameters:
+        - $ref: '#/components/parameters/PortfolioId'
+      responses:
+        '200':
+          description: Portfolio overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Handler error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerErrorResponse'
+
+  /portfolios/{portfolioId}/risk:
+    get:
+      tags: [Portfolios]
+      summary: Get portfolio risk analysis
+      description: Risk analysis for a portfolio including health factors, concentration, and liquidation exposure.
+      operationId: portfolioRisk
+      parameters:
+        - $ref: '#/components/parameters/PortfolioId'
+      responses:
+        '200':
+          description: Portfolio risk analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /portfolios/{portfolioId}/yield:
+    get:
+      tags: [Portfolios]
+      summary: Get portfolio yield breakdown
+      description: Yield breakdown for a portfolio including APY by position and total portfolio yield.
+      operationId: portfolioYield
+      parameters:
+        - $ref: '#/components/parameters/PortfolioId'
+      responses:
+        '200':
+          description: Portfolio yield data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /portfolios/{portfolioId}/alerts:
+    get:
+      tags: [Portfolios]
+      summary: Get portfolio alerts
+      description: Active alerts for a portfolio based on configured thresholds.
+      operationId: portfolioAlerts
+      parameters:
+        - $ref: '#/components/parameters/PortfolioId'
+      responses:
+        '200':
+          description: Portfolio alerts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /portfolios/{portfolioId}/liquidity:
+    get:
+      tags: [Portfolios]
+      summary: Get portfolio liquidity analysis
+      description: Liquidity analysis for a portfolio including available liquidity and withdrawal impact.
+      operationId: portfolioLiquidity
+      parameters:
+        - $ref: '#/components/parameters/PortfolioId'
+      responses:
+        '200':
+          description: Portfolio liquidity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /portfolios/{portfolioId}/thresholds:
+    put:
+      tags: [Portfolios]
+      summary: Update portfolio risk thresholds
+      description: Update the risk alert thresholds for a portfolio.
+      operationId: updateThresholds
+      parameters:
+        - $ref: '#/components/parameters/PortfolioId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                thresholds:
+                  type: object
+                  additionalProperties: true
+                  description: Key-value pairs of threshold settings
+      responses:
+        '200':
+          description: Updated thresholds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ─── Health ────────────────────────────────────────────────────
+  /health:
+    get:
+      tags: [Health]
+      summary: API health check
+      description: Check API health status. Does not require authentication.
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ─── Agent ─────────────────────────────────────────────────────
+  /agent/check-risk:
+    post:
+      tags: [Agent]
+      summary: Check risk for a DeFi action
+      description: Evaluate the risk of a proposed DeFi action (deposit, borrow, withdraw) against configurable risk policies. Returns ALLOW, DENY, or WARN with reasons and alternatives.
+      operationId: checkRisk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskCheckRequest'
+      responses:
+        '200':
+          description: Risk check result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RiskCheckResult'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+        '400':
+          description: Handler error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandlerErrorResponse'
+
+  /agent/policy/defaults:
+    get:
+      tags: [Agent]
+      summary: Get default risk policy
+      description: Get the default risk policy configuration used when no custom policy is provided.
+      operationId: agentDefaults
+      responses:
+        '200':
+          description: Default policy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RiskPolicy'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+
+  # ─── Client Self-Service ───────────────────────────────────────
+  /client/me:
+    get:
+      tags: [Client]
+      summary: Get own profile
+      description: Get the authenticated client's profile information.
+      operationId: clientProfile
+      security:
+        - ClientJWT: []
+      responses:
+        '200':
+          description: Client profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientProfile'
+
+  /client/keys:
+    get:
+      tags: [Client]
+      summary: List own API keys
+      description: List all API keys for the authenticated client.
+      operationId: listClientKeys
+      security:
+        - ClientJWT: []
+      responses:
+        '200':
+          description: List of API keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiKeyInfo'
+    post:
+      tags: [Client]
+      summary: Create new API key
+      description: Generate a new API key. The raw key is returned once and cannot be retrieved again.
+      operationId: createClientKey
+      security:
+        - ClientJWT: []
+      responses:
+        '201':
+          description: API key created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyCreatedResponse'
+
+  /client/keys/{keyId}:
+    delete:
+      tags: [Client]
+      summary: Revoke an API key
+      description: Revoke an API key. This action is irreversible.
+      operationId: revokeClientKey
+      security:
+        - ClientJWT: []
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: API key ID to revoke
+      responses:
+        '200':
+          description: Key revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /client/usage:
+    get:
+      tags: [Client]
+      summary: Get usage history
+      description: Get request usage history for the authenticated client (most recent 200 records).
+      operationId: clientUsage
+      security:
+        - ClientJWT: []
+      responses:
+        '200':
+          description: Usage history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsageSummary'
+
+  /client/dashboard:
+    get:
+      tags: [Client]
+      summary: Get quota dashboard
+      description: Get current quota usage and limits for the authenticated client.
+      operationId: clientDashboard
+      security:
+        - ClientJWT: []
+      responses:
+        '200':
+          description: Quota dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotaDashboard'

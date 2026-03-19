@@ -1,0 +1,63 @@
+---
+title: "Circular API"
+description: "REST API for DeFi risk intelligence — markets, vaults, positions, risk analysis, and credit ratings"
+sidebarTitle: "Overview"
+---
+
+## Introduction
+
+The Circular API provides programmatic access to DeFi risk intelligence across Morpho Blue, Aave V3, and other lending protocols. It powers the Circular dashboard, MCP tools for Claude, and third-party integrations.
+
+**Base URL:**
+
+```
+https://api.circular.rosetta.sh/api/v1
+```
+
+## Quick Start
+
+**1. Get an API key** from the [Circular Dashboard](https://circular.rosetta.sh) or via the [Client API](/circular/api/client/keys-create).
+
+**2. Make your first request:**
+
+```bash
+curl -H "Authorization: Bearer circ_live_your_key_here" \
+  https://api.circular.rosetta.sh/api/v1/markets?limit=5
+```
+
+**3. Parse the response:**
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "latencyMs": 142,
+    "freshness": "live",
+    "source": "morpho+aave"
+  }
+}
+```
+
+## Response Envelope
+
+Every successful response wraps data in a standard envelope:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `data` | any | The endpoint-specific payload |
+| `meta.latencyMs` | number | Server-side processing time |
+| `meta.freshness` | string | Data freshness indicator |
+| `meta.source` | string | Which protocol(s) provided data |
+
+## Endpoint Categories
+
+| Category | Tier | Endpoints | Description |
+| --- | --- | --- | --- |
+| Core Data | Free+ | 19 | Markets, vaults, positions, liquidations, stats, health |
+| Risk & Analytics | Pro+ | 29 | Risk analysis, strategies, ratings, research |
+| Portfolio Management | Free+ | 7 | Portfolio tracking, risk, yield, alerts |
+| Integrations | Enterprise | 8 | Agent risk API, client self-service |
+
+## Financial Data Conventions
+
+All monetary values are in **USD**. APYs are stored as **decimals** (0.042 = 4.2%). LLTV is normalized **0-1**. Health factor **>= 1 is safe**, below 1 is liquidatable. TVL is **supply-side only** (never includes borrows).

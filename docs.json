@@ -8,6 +8,13 @@
     "dark": "#404040"
   },
   "favicon": "/favicon.svg",
+  "openapi": "circular/api/openapi.yaml",
+  "api": {
+    "baseUrl": "https://api.circular.rosetta.sh/api/v1",
+    "auth": {
+      "method": "bearer"
+    }
+  },
   "navigation": {
     "tabs": [
       {
@@ -46,7 +53,101 @@
               "circular/analytics",
               "circular/institutional",
               "circular/research",
-              "circular/risk-scoring"
+              "circular/risk-scoring",
+              {
+                "group": "Circular API",
+                "pages": [
+                  "circular/api/overview",
+                  "circular/api/authentication",
+                  "circular/api/rate-limits",
+                  "circular/api/errors",
+                  "circular/api/caching",
+                  "circular/api/x402-payments",
+                  {
+                    "group": "Core Data",
+                    "pages": [
+                      "circular/api/markets/list",
+                      "circular/api/markets/search",
+                      "circular/api/markets/compare",
+                      "circular/api/markets/get",
+                      "circular/api/markets/history",
+                      "circular/api/markets/positions",
+                      "circular/api/tokens/lookup",
+                      "circular/api/vaults/list",
+                      "circular/api/vaults/get",
+                      "circular/api/vaults/concentration",
+                      "circular/api/vaults/depositors",
+                      "circular/api/positions/all",
+                      "circular/api/positions/scan",
+                      "circular/api/positions/loops",
+                      "circular/api/positions/vault-positions",
+                      "circular/api/liquidations/feed",
+                      "circular/api/liquidations/user",
+                      "circular/api/stats",
+                      "circular/api/health"
+                    ]
+                  },
+                  {
+                    "group": "Risk & Analytics",
+                    "pages": [
+                      "circular/api/risk/dashboard",
+                      "circular/api/risk/asset-concentration",
+                      "circular/api/risk/concentration",
+                      "circular/api/risk/exposure",
+                      "circular/api/risk/depeg-simulate",
+                      "circular/api/risk/yields",
+                      "circular/api/risk/report",
+                      "circular/api/risk/liquidation-map",
+                      "circular/api/risk/protocol-health",
+                      "circular/api/risk/positions-at-risk",
+                      "circular/api/analytics/strategies",
+                      "circular/api/analytics/trends",
+                      "circular/api/analytics/yields",
+                      "circular/api/analytics/strategy",
+                      "circular/api/analytics/chains-compare",
+                      "circular/api/analytics/simulate-position",
+                      "circular/api/analytics/alerts",
+                      "circular/api/analytics/top-wallets",
+                      "circular/api/analytics/whales",
+                      "circular/api/ratings/methodology",
+                      "circular/api/ratings/market",
+                      "circular/api/ratings/vaults",
+                      "circular/api/ratings/vault",
+                      "circular/api/ratings/list",
+                      "circular/api/research/market",
+                      "circular/api/research/deploy",
+                      "circular/api/research/risk-assessment",
+                      "circular/api/research/borrow-markets",
+                      "circular/api/research/borrow-strategy"
+                    ]
+                  },
+                  {
+                    "group": "Portfolios",
+                    "pages": [
+                      "circular/api/portfolios/list",
+                      "circular/api/portfolios/overview",
+                      "circular/api/portfolios/risk",
+                      "circular/api/portfolios/yield",
+                      "circular/api/portfolios/alerts",
+                      "circular/api/portfolios/liquidity",
+                      "circular/api/portfolios/thresholds"
+                    ]
+                  },
+                  {
+                    "group": "Integrations",
+                    "pages": [
+                      "circular/api/agent/check-risk",
+                      "circular/api/agent/policy-defaults",
+                      "circular/api/client/profile",
+                      "circular/api/client/keys-list",
+                      "circular/api/client/keys-create",
+                      "circular/api/client/keys-revoke",
+                      "circular/api/client/usage",
+                      "circular/api/client/dashboard"
+                    ]
+                  }
+                ]
+              }
             ]
           },
           {
@@ -91,9 +192,9 @@
     }
   },
   "integrations": {
-      "posthog": {
-          "apiKey": "phc_B1nVkU59MZWKKRrj6ywZyfaPJwhpGqn0XzeceWRAlEn",
-          "apiHost": "https://eu.posthog.com"
-      }
+    "posthog": {
+      "apiKey": "phc_B1nVkU59MZWKKRrj6ywZyfaPJwhpGqn0XzeceWRAlEn",
+      "apiHost": "https://eu.posthog.com"
     }
+  }
 }

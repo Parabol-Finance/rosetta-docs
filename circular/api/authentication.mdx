@@ -1,0 +1,58 @@
+---
+title: "Authentication"
+description: "API key and JWT authentication for the Circular API"
+sidebarTitle: "Authentication"
+---
+
+## API Key Authentication
+
+Most endpoints use API key authentication via the `Authorization` header.
+
+```bash
+Authorization: Bearer circ_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### Key Format
+
+| Prefix | Environment |
+| --- | --- |
+| `circ_live_*` | Production |
+| `circ_test_*` | Testing |
+
+### Getting a Key
+
+1. Sign up at [circular.rosetta.sh](https://circular.rosetta.sh)
+2. Navigate to API Keys in your dashboard
+3. Generate a new key — **save it immediately**, it is only shown once
+
+Or use the [Create API Key](/circular/api/client/keys-create) endpoint if you already have JWT access.
+
+### No API Key Required
+
+| Endpoint | Auth Method |
+| --- | --- |
+| `GET /health` | None |
+| `/client/*` | Supabase JWT (see below) |
+
+## JWT Authentication (Client Routes)
+
+Client self-service routes (`/client/*`) use Supabase JWT tokens instead of API keys.
+
+```bash
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+The JWT must contain a `client_id` claim identifying your client account.
+
+## Error Responses
+
+| Status | Error Code | Meaning |
+| --- | --- | --- |
+| 401 | `MISSING_API_KEY` | No `Authorization` header provided |
+| 401 | `INVALID_KEY_FORMAT` | Key present but does not start with `circ_live_` or `circ_test_` |
+| 401 | `INVALID_API_KEY` | Key not found or revoked |
+| 401 | `UNAUTHORIZED` | No Bearer token provided on a JWT-authenticated route |
+| 401 | `INVALID_TOKEN` | JWT is invalid or expired |
+| 403 | `ACCOUNT_SUSPENDED` | Account billing is suspended — contact support |
+| 403 | `FORBIDDEN` | JWT lacks required role or claim |
+| 403 | `ENDPOINT_NOT_INCLUDED` | Your tier does not include this endpoint category |
