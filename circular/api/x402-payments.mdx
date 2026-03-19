@@ -1,0 +1,36 @@
+---
+title: "x402 Payments"
+description: "Pay-per-request pricing for agent API routes via HTTP 402"
+sidebarTitle: "x402 Payments"
+---
+
+## Overview
+
+The Agent API supports optional pay-per-request pricing using the [x402 protocol](https://www.x402.org). When enabled, agent routes require a payment header before processing.
+
+<Note>
+x402 payments are disabled by default. They are an opt-in feature for API operators.
+</Note>
+
+## Pricing
+
+| Endpoint | Price |
+| --- | --- |
+| `POST /agent/check-risk` | $0.01 |
+
+## Payment Network
+
+- **Network:** Base mainnet (EIP-155 chain ID 8453)
+- **Facilitator:** `https://www.x402.org/facilitator`
+
+## How It Works
+
+1. Client sends a request to a priced endpoint
+2. Server responds with HTTP 402 and payment details
+3. Client pays via the x402 facilitator
+4. Client retries the request with the payment proof header
+5. Server verifies payment and processes the request
+
+## When Disabled
+
+When x402 is not enabled (default), agent routes work normally with standard API key authentication and tier-based access control.

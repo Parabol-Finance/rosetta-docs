@@ -1,0 +1,93 @@
+---
+title: "Rate Limits & Quotas"
+description: "Tier-based rate limiting, daily/monthly quotas, and retry strategy"
+sidebarTitle: "Rate Limits"
+---
+
+## Rate Limiting
+
+Requests are rate-limited using a sliding window algorithm. Limits are per API key, per second.
+
+### Response Headers
+
+Every authenticated response includes rate limit headers:
+
+| Header | Description |
+| --- | --- |
+| `X-RateLimit-Limit` | Maximum requests per second for your tier |
+| `X-RateLimit-Remaining` | Remaining requests in the current window |
+| `X-RateLimit-Reset` | Unix timestamp (milliseconds) when the window resets |
+
+### When Rate Limited
+
+```json
+{
+  "error": "RATE_LIMIT_EXCEEDED",
+  "message": "Rate limit 10 req/s exceeded. Retry after 1s.",
+  "retryAfter": 1
+}
+```
+
+**Status code:** 429
+
+**Strategy:** Wait `retryAfter` seconds before retrying. Use exponential backoff for repeated 429s.
+
+## Quotas
+
+Each tier has daily and monthly request quotas. Quotas reset at midnight UTC (daily) and the 1st of each month (monthly).
+
+### When Quota Exceeded
+
+```json
+{
+  "error": "DAILY_QUOTA_EXCEEDED",
+  "message": "Daily quota of 1000 requests exceeded.",
+  "limit": 1000,
+  "used": 1001
+}
+```
+
+**Status code:** 429
+
+## Tier Access Matrix
+
+| Feature | Free | Pro | Enterprise |
+| --- | --- | --- | --- |
+| Rate limit | 5 req/s | 20 req/s | 100 req/s |
+| Daily quota | 1,000 | 10,000 | Unlimited |
+| Monthly quota | 10,000 | 300,000 | Unlimited |
+| Result cap | 100 | 500 | Unlimited |
+| Core endpoints | Yes | Yes | Yes |
+| Position endpoints | Yes | Yes | Yes |
+| Portfolio endpoints | Yes | Yes | Yes |
+| Risk endpoints | No | Yes | Yes |
+| Analytics endpoints | No | Yes | Yes |
+| Research endpoints | No | Yes | Yes |
+| Ratings endpoints | No | Yes | Yes |
+| Agent endpoints | No | No | Yes |
+| Allowed chains | Ethereum only | All | All |
+| History window | 30 days | 90 days | Unlimited |
+
+<Note>
+These are default tier values configured at launch. Actual limits are stored in the database and may differ. Use the [Quota Dashboard](/circular/api/client/dashboard) endpoint to check your current limits programmatically.
+</Note>
+
+## Tier-Aware Clamping
+
+The API applies tier-specific constraints automatically:
+
+- **Result cap:** `limit` parameter is clamped to your tier's maximum
+- **Chain filter:** `chainIds` parameter is filtered to your allowed chains
+- **History window:** `startDate` is clamped to your tier's history window
+
+## Route-Specific Limits
+
+Some endpoints have higher default limits:
+
+| Endpoint | Max `limit` |
+| --- | --- |
+| `GET /markets` | 1,000 |
+| `GET /liquidations` | 500,000 |
+| All other endpoints | 200 |
+
+If no `limit` is provided, defaults to 50. Values above the max are silently clamped.
